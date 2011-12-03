@@ -10,6 +10,6 @@ writer.add_document(title=u"Second document", path=u"/b",
 writer.commit()
 from whoosh.qparser import QueryParser
 with ix.searcher() as searcher:
-	    query = QueryParser("content", ix.schema).parse(unicode("first we've put"))
+	    query = QueryParser("content", ix.schema).parse(unicode("first we've added"))
 	    results = searcher.search(query)
 	    print results[0]
