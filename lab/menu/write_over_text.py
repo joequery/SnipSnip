@@ -2,11 +2,24 @@ import curses
 import os
 
 def do_stuff(stdscr):
-	stdscr.addstr("Current mode: Typing mode", curses.A_STANDOUT)
+	stdscr.addstr("Current mode: Typing mode\n")
+	stdscr.addstr("Type something: ")
 	stdscr.refresh() # Must tell curse to redraw screen.
-	stdscr.addstr("\nAnother line!", curses.A_STANDOUT)
+	
+	# Black text on green background
+	curses.init_pair(1, curses.COLOR_BLACK, curses.COLOR_GREEN)
+
+	# Get user input
+	s = getline(stdscr)
+
+	stdscr.addstr(s, curses.color_pair(1))
 	stdscr.refresh()
 
+def getline(stdscr):
+	curses.echo()
+	s = stdscr.getstr()
+	curses.noecho()
+	return s
 
 # Wrapper that takes care of alot of annoying variable 
 # and configurations.
