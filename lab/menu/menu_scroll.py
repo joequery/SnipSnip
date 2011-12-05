@@ -1,5 +1,6 @@
 import curses
 import os
+import math
 
 def do_stuff(stdscr):
 	'''
@@ -49,24 +50,56 @@ def do_stuff(stdscr):
 	'''
 
 	################ Begin execution! ####################
-	myList = ["item0", "item1", "item2", "item3", "item4", "item5"]
-	listSize = len(myList)
+	
+	# Item0, Item1, Item2, ...
+	myList = ["Item%d" % x for x in range(0, 45)]
+	scrollIndex = 0
+	menuPage = 0
+	itemsPerPage = 9
+	numMenuPages = math.ceil(len(myList) * 1.0 / itemsPerPage)
+	displaySize = itemsPerPage
+	menuList = myList[menuPage * displaySize:displaySize]
 
-	activeIndex = 0
-	display_menu_from_list(myList, activeIndex)
+	display_menu_from_list(menuList, scrollIndex)
 	#j moves down, k moves up
 	c = stdscr.getch()
 
-	# While enter key isn't pressed - enter key denotes selection
+	'''
+	Commands:
+	j - scroll down
+	k - scroll up
+	l - next displaySize items
+	h - previous displaySize items
+	'''
 	while c != ord('\n'):
 		if c == ord('j'):
-			activeIndex = (activeIndex + 1) % listSize
+			scrollIndex = (scrollIndex + 1) % displaySize
 		elif c == ord('k'):
-			activeIndex = (activeIndex - 1) % listSize
+			scrollIndex = (scrollIndex - 1) % displaySize
+		elif c == ord('l'):
+			# Make sure we don't go too far forward.
+			if menuPage < numMenuPages - 1:
+				menuPage += 1
+				startIndex = (menuPage * displaySize)
+				endIndex = (startIndex + displaySize)
+				menuList = myList[startIndex:endIndex]
+				displaySize = min(9, len(menuList))
+				scrollIndex = 0
+		elif c == ord('h'):
+			# Make sure we don't go too far back!
+			if menuPage > 0:
+				menuPage -= 1
+				displaySize = itemsPerPage
+				startIndex = (menuPage * displaySize)
+				endIndex = (startIndex + displaySize)
+				menuList = myList[startIndex:endIndex]
+				scrollIndex = 0
 
-		display_menu_from_list(myList, activeIndex)
+		display_menu_from_list(menuList, scrollIndex)
 		c = stdscr.getch()
-	stdscr.addstr("The current active index: %d\n" % activeIndex)
+	stdscr.addstr("The current scroll index: %d\n" % scrollIndex)
+	stdscr.addstr("The overall index: %d\n" % 
+			(menuPage * itemsPerPage + scrollIndex) )
 	stdscr.refresh()
 
 # Wrapper that takes care of alot of annoying variable 
