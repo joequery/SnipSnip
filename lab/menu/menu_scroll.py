@@ -70,9 +70,15 @@ def do_stuff(stdscr):
 	k - scroll up
 	l - next displaySize items
 	h - previous displaySize items
+	1-9: Select the corresponding item!
 	'''
 	while c != ord('\n'):
-		if c == ord('j'):
+		# If an integer, just return the index. Remember the display
+		# begins at 1, so subtract 1
+		if c in range(49, 57 + 1):
+			scrollIndex = (c) - 49 # See ASCII table
+			break
+		elif c == ord('j'):
 			scrollIndex = (scrollIndex + 1) % displaySize
 		elif c == ord('k'):
 			scrollIndex = (scrollIndex - 1) % displaySize
@@ -97,6 +103,11 @@ def do_stuff(stdscr):
 
 		display_menu_from_list(menuList, scrollIndex)
 		c = stdscr.getch()
+		# End while
+
+	# Display one last time to make sure the user sees confirmation
+	# The correct item was selected.
+	display_menu_from_list(menuList, scrollIndex)
 	stdscr.addstr("The current scroll index: %d\n" % scrollIndex)
 	stdscr.addstr("The overall index: %d\n" % 
 			(menuPage * itemsPerPage + scrollIndex) )
