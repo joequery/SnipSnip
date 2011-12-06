@@ -248,7 +248,7 @@ def do_stuff(stdscr):
 	top.refresh()
 
 	# Let's create a bottom screen because we can!
-	bottom = curses.newwin(5,80, 16, 0)
+	bottom = curses.newwin(10,80, 16, 0)
 
 
 	myList = ["Item%d" % x for x in range(0, 40)]
