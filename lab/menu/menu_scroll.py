@@ -43,94 +43,162 @@ def do_stuff(stdscr):
 				textFormat = FORMAT["highlight"]
 			else:
 				textFormat = FORMAT["plain"]
-			stdscr.addstr(
+			menu.addstr(
 					coords[1] -1 + counter,coords[0],
 					"%d. %s\n" % (counter, item),
 					curses.color_pair(textFormat)
 					)
 			counter += 1
-		stdscr.refresh()
+		menu.refresh()
 	'''
 	End helper functions
 	'''
 
-	################ Begin execution! ####################
-	
-	# Hide the cursor!
-	curses.curs_set(0)
+	def display_menu(itemList, itemsPerPage, menuCoords, commandMap):
+		'''
+		Displays a scrollable menu. Returns a tuple (g.selectedIndex, 
+		totalIndex), representing the location of the menu selector 
+		and the items total place in the list respectively
 
-	# Item0, Item1, Item2, ...
-	'''
-	Variables
-	selectedIndex: The index of the currently selected menu item
-	itemsPerPage: How many elements of the list will be shown at once
-	menuPage: The current "page" of the menu. 
-	numMenuPages: How many menu pages there are total
-	menuList: The section of the menuList that is currently viewable
-	displaySize: Initially itemsPerPage, will change if menuList is small.
-	menuCoords: (x,y) coordinates for where to draw the menu
-	'''
-	myList = ["Item%d" % x for x in range(0, 45)]
-	selectedIndex = 0
-	itemsPerPage = 9
-	menuPage = 0
-	numMenuPages = math.ceil(len(myList) * 1.0 / itemsPerPage)
-	displaySize = itemsPerPage
-	menuList = myList[menuPage * displaySize:displaySize]
-	menuCoords = (5,0)
+		Parameters:
+			itemList: The list that will be displayed as a menu
+		itemsPerPage: How many elements of the list will be shown at once
+		  menuCoords: (x,y) coordinates for where to draw the menu
+		  commandMap: Dictionary that maps keyboard strokes to commands.
 
-	display_menu_from_list(menuList, selectedIndex, menuCoords)
-	#j moves down, k moves up
-	c = stdscr.getch()
+		  Example command map:
+			commandMap = {
+				'j': 'someAction',
+				'k': 'someOtherAction'
+			}
 
-	'''
-	Commands:
-	j - scroll down
-	k - scroll up
-	l - next displaySize items
-	h - previous displaySize items
-	1-9: Select the corresponding item!
-	'''
-	while c != ord('\n'):
-		# If an integer, just return the index. Remember the display
-		# begins at 1, so subtract 1
-		if c in range(49, 57 + 1):
-			selectedIndex = (c) - 49 # See ASCII table
-			break
-		elif c == ord('j'):
-			selectedIndex = (selectedIndex + 1) % displaySize
-		elif c == ord('k'):
-			selectedIndex = (selectedIndex - 1) % displaySize
-		elif c == ord('l'):
+			The following actions are available:
+			scrollUp
+			scrollDown
+			nextPage
+			prevPage
+		'''
+
+		###############################################################
+		# Global Variables:
+		###############################################################
+
+		'''
+		g.selectedIndex: The index of the currently selected menu item
+			 g.menuPage: The current "page" of the menu. 
+		 g.numMenuPages: How many menu pages there are total
+			 g.menuList: The section of the g.menuList currently viewable
+		  g.displaySize: Initially itemsPerPage, changes if g.menuList is small
+		'''
+		class g:
+			selectedIndex = 2
+			menuPage = 0
+			numMenuPages = math.ceil(len(itemList) * 1.0 / itemsPerPage)
+			displaySize = itemsPerPage
+			menuList = itemList[menuPage * displaySize:displaySize]
+
+		###############################################################
+		# CommandMap "API"
+		###############################################################
+
+		def scrollUp():
+			'''	Scroll Up'''
+			g.selectedIndex = (g.selectedIndex - 1) % g.displaySize
+
+		def scrollDown():
+			''' Scroll Down '''
+			g.selectedIndex = (g.selectedIndex + 1) % g.displaySize
+
+		def nextPage():
+			''' Next Page '''
 			# Make sure we don't go too far forward.
-			if menuPage < numMenuPages - 1:
-				menuPage += 1
-				startIndex = (menuPage * displaySize)
-				endIndex = (startIndex + displaySize)
-				menuList = myList[startIndex:endIndex]
-				displaySize = min(itemsPerPage, len(menuList))
-				selectedIndex = 0
-		elif c == ord('h'):
+			if g.menuPage < g.numMenuPages - 1:
+				g.menuPage += 1
+				startIndex = (g.menuPage * g.displaySize)
+				endIndex = (startIndex + g.displaySize)
+				g.menuList = itemList[startIndex:endIndex]
+				g.displaySize = min(itemsPerPage, len(g.menuList))
+				g.selectedIndex = 0
+
+				# If the menuList is smaller than itemsPerPage, there
+				# will be menu items left over. We'll need to clear
+				# to get rid of these
+				if g.displaySize < itemsPerPage:
+					menu.clear()
+
+		def prevPage():
+			''' Previous Page '''
 			# Make sure we don't go too far back!
-			if menuPage > 0:
-				menuPage -= 1
-				displaySize = itemsPerPage
-				startIndex = (menuPage * displaySize)
-				endIndex = (startIndex + displaySize)
-				menuList = myList[startIndex:endIndex]
-				selectedIndex = 0
+			if g.menuPage > 0:
+				g.menuPage -= 1
+				g.displaySize = itemsPerPage
+				startIndex = (g.menuPage * g.displaySize)
+				endIndex = (startIndex + g.displaySize)
+				g.menuList = itemList[startIndex:endIndex]
+				g.selectedIndex = 0
 
-		display_menu_from_list(menuList, selectedIndex, menuCoords)
-		c = stdscr.getch()
-		# End while
+		###############################################################
+		# display_menu main
+		###############################################################
 
-	# Display one last time to make sure the user sees confirmation
-	# The correct item was selected.
-	display_menu_from_list(menuList, selectedIndex, menuCoords)
-	stdscr.addstr("The current scroll index: %d\n" % selectedIndex)
-	stdscr.addstr("The overall index: %d\n" % 
-			(menuPage * itemsPerPage + selectedIndex) )
-	stdscr.refresh()
+		display_menu_from_list(g.menuList, g.selectedIndex, menuCoords)
+		#j moves down, k moves up
+		c = menu.getch()
+
+		# If '\n', then enter was pressed and a selection was made.
+		while c != ord('\n'):
+			# If an integer, then the user has made a selection. Menu label
+			# begins at 1, so subtract 1 from users choice.
+			if c in range(49, 57 + 1):
+				g.selectedIndex = (c) - 49 # See ASCII table
+				break
+			# If not an integer, look through the commandMap and execute the
+			# provided function
+			elif chr(c) in commandMap.keys():
+				locals()[commandMap[chr(c)]]()
+
+			# Erase menu 
+			display_menu_from_list(g.menuList, g.selectedIndex, menuCoords)
+			c = menu.getch()
+			# End while
+
+		# Display one last time to make sure the user sees confirmation
+		# The correct item was selected.
+		display_menu_from_list(g.menuList, g.selectedIndex, menuCoords)
+		overallIndex = g.menuPage * itemsPerPage + g.selectedIndex
+		menu.addstr("The current scroll index: %d\n" % g.selectedIndex)
+		menu.addstr("The overall index: %d\n" % 
+				(overallIndex) )
+		menu.refresh()
+		return (g.selectedIndex, overallIndex)
+
+	################ Begin execution! ####################
+
+	curses.curs_set(0) # Hide the cursor for aesthetics
+
+	# Top screen
+	top = curses.newwin(2, 20, 0, 0,)
+	top.addstr("This is the top!\n")
+	top.addstr("-" * 19)
+	top.refresh()
+
+	# Let's create a bottom screen because we can!
+	bottom = curses.newwin(2,20, 20, 0)
+	bottom.addstr("This is the bottom!\n")
+	bottom.addstr("-" * 19)
+	bottom.refresh()
+
+
+	myList = ["Item%d" % x for x in range(0, 40)]
+	commandMap = {
+		'j': 'scrollDown',
+		'k': 'scrollUp',
+		'l': 'nextPage',
+		'h': 'prevPage'
+	}
+	menu = curses.newwin(15, 80, 5, 0)
+	display_menu(myList, 9, (0,0), commandMap)
+
 
 # Wrapper that takes care of alot of annoying variable 
 # and configurations.
@@ -144,6 +212,6 @@ curses.echo() / curses.noecho()
 curses.cbreak() / curses.nocbreak()
 	Is enter required to send keyboard data?
 
-stdscr.keypad(1) / stdscr.keypad(0)
+menu.keypad(1) / menu.keypad(0)
 	Will keys like left,right, page up, etc be detected?
 '''
