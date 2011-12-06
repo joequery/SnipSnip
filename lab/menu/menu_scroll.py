@@ -138,7 +138,33 @@ def do_stuff(stdscr):
 				g.selectedIndex = 0
 
 		###############################################################
-		# display_menu main
+		# Display the menu commands
+		###############################################################
+
+		commandsPerLine = 4
+		commandList = ["(%s)%s" % (k,locals()[v].__doc__.strip()) 
+				for (k,v) in commandMap.items()]
+		
+		for idx, command in enumerate(commandList):
+			bottom.addstr(command)
+
+			# Determine what to put at the end. Commas for same line,
+			# newlines for items reaching the edge, nothing for
+			# the last item
+			if idx == len(commandList) - 1:
+				suffix = ""
+			elif (idx+1) % commandsPerLine == 0:
+				suffix = "\n"
+			else:
+				suffix = ", "
+			bottom.addstr(suffix)
+
+
+		bottom.refresh()
+
+
+		###############################################################
+		# Display the actual menu now!
 		###############################################################
 
 		display_menu_from_list(g.menuList, g.selectedIndex, menuCoords)
@@ -166,14 +192,11 @@ def do_stuff(stdscr):
 		# The correct item was selected.
 		display_menu_from_list(g.menuList, g.selectedIndex, menuCoords)
 		overallIndex = g.menuPage * itemsPerPage + g.selectedIndex
-		menu.addstr("The current scroll index: %d\n" % g.selectedIndex)
-		menu.addstr("The overall index: %d\n" % 
-				(overallIndex) )
 		menu.refresh()
 		return (g.selectedIndex, overallIndex)
 
-	################ Begin execution! ####################
 
+	################ Begin execution! ####################
 	curses.curs_set(0) # Hide the cursor for aesthetics
 
 	# Top screen
@@ -183,10 +206,7 @@ def do_stuff(stdscr):
 	top.refresh()
 
 	# Let's create a bottom screen because we can!
-	bottom = curses.newwin(2,20, 20, 0)
-	bottom.addstr("This is the bottom!\n")
-	bottom.addstr("-" * 19)
-	bottom.refresh()
+	bottom = curses.newwin(4,80, 16, 0)
 
 
 	myList = ["Item%d" % x for x in range(0, 40)]
@@ -196,7 +216,7 @@ def do_stuff(stdscr):
 		'l': 'nextPage',
 		'h': 'prevPage'
 	}
-	menu = curses.newwin(15, 80, 5, 0)
+	menu = curses.newwin(10, 80, 5, 0)
 	display_menu(myList, 9, (0,0), commandMap)
 
 
