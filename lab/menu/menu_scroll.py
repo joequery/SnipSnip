@@ -1,6 +1,5 @@
-import curses
-import os
-import math
+import curses, os, math, tempfile
+from subprocess import call
 
 def do_stuff(stdscr):
 	'''
@@ -23,6 +22,35 @@ def do_stuff(stdscr):
 	'''
 	Begin helper functions
 	'''
+	def write(win, theStr, coords=False, style="plain"):
+		'''
+		Convenience method for addstr. 
+		win: the window object
+		theStr: the string to write
+		coords: (y,x) coords
+		style: keys of the FORMAT dict above
+		'''
+		if coords:
+			win.addstr(coords[1],coords[0], theStr,	
+			curses.color_pair(FORMAT[style]))
+		else:
+			win.addstr(theStr, curses.color_pair(FORMAT[style]))
+
+	def text_editor():
+		'''
+		Launch the text editor represented by the EDITOR environment
+		variable
+		From stack overflow (http://bit.ly/tBzqgz)
+		'''
+		EDITOR = os.environ.get('EDITOR','vim') #that easy!
+		initial_message = "" # if you want to set up the file somehow
+
+		with tempfile.NamedTemporaryFile(suffix=".tmp") as tmpfile:
+			tmpfile.write(initial_message)
+			tmpfile.flush()
+			call([EDITOR, tmpfile.name])
+			# do the parsing with `tempfile` using regular File operations
+
 	def display_menu_from_list(myList, activeIndex = False, coords = (0,0)):
 		'''
 		Display a menu from a list myList. Will look like:
@@ -64,19 +92,23 @@ def do_stuff(stdscr):
 			itemList: The list that will be displayed as a menu
 		itemsPerPage: How many elements of the list will be shown at once
 		  menuCoords: (x,y) coordinates for where to draw the menu
-		  commandMap: Dictionary that maps keyboard strokes to commands.
+		  commandMap: Tuple that maps keyboard strokes to commands.
 
 		  Example command map:
-			commandMap = {
-				'j': 'someAction',
-				'k': 'someOtherAction'
-			}
+			commandMap = (
+				('j', 'scrollDown'),
+				('k', 'scrollUp'),
+				('n', 'nextPage'),
+				('N', 'prevPage')
+			)
 
 			The following actions are available:
 			scrollUp
 			scrollDown
 			nextPage
 			prevPage
+			selecTop
+			selectBottom
 		'''
 
 		###############################################################
@@ -102,15 +134,15 @@ def do_stuff(stdscr):
 		###############################################################
 
 		def scrollUp():
-			'''	Scroll Up'''
+			'''Scroll Up'''
 			g.selectedIndex = (g.selectedIndex - 1) % g.displaySize
 
 		def scrollDown():
-			''' Scroll Down '''
+			'''Scroll Down'''
 			g.selectedIndex = (g.selectedIndex + 1) % g.displaySize
 
 		def nextPage():
-			''' Next Page '''
+			'''Next Page'''
 			# Make sure we don't go too far forward.
 			if g.menuPage < g.numMenuPages - 1:
 				g.menuPage += 1
@@ -137,13 +169,22 @@ def do_stuff(stdscr):
 				g.menuList = itemList[startIndex:endIndex]
 				g.selectedIndex = 0
 
+		def selectBottom():
+			'''Select Bottom'''
+			g.selectedIndex = len(g.menuList) - 1
+
+		def selectTop():
+			'''Select Top'''
+			g.selectedIndex = 0
+
 		###############################################################
 		# Display the menu commands
 		###############################################################
 
 		commandsPerLine = 4
 		commandList = ["(%s)%s" % (k,locals()[v].__doc__.strip()) 
-				for (k,v) in commandMap.items()]
+				for (k,v) in commandMap]
+		commandMap = dict(commandMap)
 		
 		for idx, command in enumerate(commandList):
 			bottom.addstr(command)
@@ -180,7 +221,7 @@ def do_stuff(stdscr):
 				break
 			# If not an integer, look through the commandMap and execute the
 			# provided function
-			elif chr(c) in commandMap.keys():
+			elif chr(c) in [x for (x,y) in commandMap.items()]:
 				locals()[commandMap[chr(c)]]()
 
 			# Erase menu 
@@ -210,14 +251,29 @@ def do_stuff(stdscr):
 
 
 	myList = ["Item%d" % x for x in range(0, 40)]
-	commandMap = {
-		'j': 'scrollDown',
-		'k': 'scrollUp',
-		'l': 'nextPage',
-		'h': 'prevPage'
-	}
+	commandMap = (
+		('j', 'scrollDown'),
+		('k', 'scrollUp'),
+		('n', 'nextPage'),
+		('p', 'prevPage'),
+		('G', 'selectBottom'),
+		('g', 'selectTop')
+	)
 	menu = curses.newwin(10, 80, 5, 0)
-	display_menu(myList, 9, (0,0), commandMap)
+	x, result = display_menu(myList, 9, (0,0), commandMap)
+	# Store window contents and pull back later
+	text_editor()
+	stdscr.clear()
+	stdscr.refresh()
+	menu.redrawwin()
+	top.redrawwin()
+	bottom.redrawwin()
+
+	write(bottom, "\nResulting index: %d" % result)
+	bottom.refresh()
+	top.refresh()
+	menu.refresh()
+
 
 
 # Wrapper that takes care of alot of annoying variable 
