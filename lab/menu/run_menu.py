@@ -10,13 +10,21 @@ def do_stuff(stdscr):
 	curses.curs_set(0) 
 
 	# Create a template for the windows
-	t = Template(width=80, left=0)
+	t = WindowTemplate(width=80, left=0)
 
 	# Create the individual windows
-	menuWin = t.new(top=0, height=15)
-	bottomWin = t.new(top=15, height=5)
+	topWin = Window(t, top=0, height=3)
+	menuWin = Window(t, top=3, height=12)
+	bottomWin = Window(t, top=15, height=5)
+	results = Window(t, top=20, height=4)
 
-	t.test([bottomWin, menuWin])
+	'''
+	# Show borders so we can see layout and adjust as needed
+	menuWin.test("menu")
+	bottomWin.test("bottom")
+	topWin.test("Banner!")
+	results.test("Results")
+	'''
 
 
 	itemList = ["Item%d" % x for x in range(0,30)]
@@ -24,7 +32,10 @@ def do_stuff(stdscr):
 		('j', 'scrollDown'),
 		('k', 'scrollUp'),
 		('n', 'nextPage'),
-		('N', 'prevPage')
+		('N', 'prevPage'),
+		('g', 'selectTop'),
+		('G', 'selectBottom'),
+		('q', 'exit')
 	)
 
 
@@ -39,10 +50,9 @@ def do_stuff(stdscr):
 		"highlight": 2
 	}
 
-	menu = Menu(menuWin, itemList, commandMap, FORMAT)
-	#menu.display(9)
-
-
-
+	menu = Menu(menuWin.win, itemList, commandMap, FORMAT)
+	bottomWin.flash(menu.command_str())
+	scroll, selection = menu.activate(9, (1,1))
+	results.flash("\nIndex selected: %d\n" % selection)
 
 curses.wrapper(do_stuff)

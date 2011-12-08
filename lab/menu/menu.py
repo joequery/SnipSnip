@@ -24,6 +24,7 @@ class Menu:
 	prevPage
 	selecTop
 	selectBottom
+	exit
 	'''
 
 	def __init__(self, win, itemList, commandMap, FORMAT):
@@ -31,9 +32,10 @@ class Menu:
 		self.itemList = itemList
 		self.commandMap = commandMap
 		self.FORMAT = FORMAT
+		self.__FORCE_EXIT = False
 
 
-	def display(self, itemsPerPage, coords=(0,0)):
+	def activate(self, itemsPerPage, coords=(0,0)):
 		'''
 		Displays a scrollable menu. Returns a tuple (self.__selectedIndex, 
 		totalIndex), representing the location of the menu selector 
@@ -54,6 +56,7 @@ class Menu:
 		numMenuPages: How many menu pages there are total
 		menuList: The section of the self.__menuList currently viewable
 		displaySize: Initially itemsPerPage, changes if self.__menuList is small
+		overallIndex: The index of the selected item. Will be -1 if user exits
 		'''
 		self.__selectedIndex = 0
 		self.__menuPage = 0
@@ -61,21 +64,24 @@ class Menu:
 		self.__displaySize = itemsPerPage
 		self.__menuList = self.itemList[0:self.__displaySize]
 		self.__itemsPerPage = itemsPerPage
+		self.__overallIndex = 0
 
 		###############################################################
 		# Display the actual menu now!
 		###############################################################
 
+		# Display the first menu items
 		self.__display_menu_from_list(self.__menuList, self.__selectedIndex, coords)
-		#j moves down, k moves up
-		c = self.win.getch()
 
-		# If '\n', then enter was pressed and a selection was made.
-		while c != ord('\n'):
+		keepLooping = True
+		while keepLooping:
+			c = self.win.getch()
 			# If an integer, then the user has made a selection. Menu label
-			# begins at 1, so subtract 1 from users choice.
+			# begins at 1, so subtract 1 from users choice. Force an exit
+			# since the selection was made.
 			if c in range(49, 49 + self.__displaySize):
 				self.__selectedIndex = (c) - 49 # See ASCII table
+				self.__display_menu_from_list(self.__menuList, self.__selectedIndex, coords)
 				break
 			# If not an integer, look through the commandMap and execute the
 			# provided function
@@ -84,16 +90,23 @@ class Menu:
 				getattr(self, "_Menu__%s" % funcName)()
 
 			self.__display_menu_from_list(self.__menuList, self.__selectedIndex, coords)
-			c = self.win.getch()
+
+			# If '\n', then enter was pressed and a selection was made. Also check for
+			# the FORCE_EXIT flag.
+			keepLooping = c != ord('\n') and self.__FORCE_EXIT == False
 			# End while
 
-		# Display one last time to make sure the user sees confirmation
-		# The correct item was selected.
-		self.__display_menu_from_list(self.__menuList, self.__selectedIndex, coords)
-		overallIndex = self.__menuPage * self.__itemsPerPage + self.__selectedIndex
+		# Calculate the overall index of the selected item and return it, along
+		# with the relative index of the menu. A forced exit should return -1 -1 so
+		# developer will know we've exited.
+		if self.__FORCE_EXIT != True:
+			self.__overallIndex = self.__menuPage * self.__itemsPerPage + self.__selectedIndex
+		else:
+			return (-1, -1)
+
 		self.win.refresh()
 
-		return (self.__selectedIndex, overallIndex)
+		return (self.__selectedIndex, self.__overallIndex)
 
 	def __display_menu_from_list(self, myList, activeIndex = False, coords = (0,0)):
 		'''
@@ -199,3 +212,8 @@ class Menu:
 	def __selectTop(self):
 		'''Select Top'''
 		self.__selectedIndex = 0
+
+	def __exit(self):
+		'''Exit Menu'''
+		self.__FORCE_EXIT = True
+		self.__overallIndex = -1
