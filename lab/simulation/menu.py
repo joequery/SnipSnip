@@ -5,7 +5,7 @@ class Menu:
 	'''
 	Build a customizable terminal window using curses!
 
-	win: curses newwin object representing the window where menu will be
+	window: Window curses wrapper object representing the window where menu will be
 	self.itemList: List of items that will be displayed in the menu.
 	commandMap: Tuple that maps keyboard strokes to commands.
 
@@ -27,8 +27,8 @@ class Menu:
 	exit
 	'''
 
-	def __init__(self, win, itemList, commandMap, FORMAT):
-		self.win = win
+	def __init__(self, window, itemList, commandMap, FORMAT):
+		self.win = window.win
 		self.itemList = itemList
 		self.commandMap = commandMap
 		self.FORMAT = FORMAT

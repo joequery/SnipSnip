@@ -36,6 +36,10 @@ class Window:
 		else:
 			self.win = curses.newwin(height, width, top, left)
 
+		# Create some wrappers for commonly used methods
+		self.write = self.win.addstr
+		self.draw = self.win.refresh
+
 	def println(self, s):
 		self.win.addstr(s + "\n")
 
@@ -57,4 +61,11 @@ class Window:
 		'''
 		self.win.border()
 		self.win.addstr(testString + "\n")
+		self.win.refresh()
+
+	def clear(self):
+		'''
+		Clear and refresh window
+		'''
+		self.win.clear()
 		self.win.refresh()

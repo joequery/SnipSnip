@@ -1,4 +1,5 @@
-# A simulation of the entire program!
+# A simulation of the entire program! See docs/user.md
+
 import curses, os, math, tempfile
 from subprocess import call
 from menu import Menu
@@ -26,43 +27,63 @@ def run(stdscr):
 	# Create a template for the windows
 	t = WindowTemplate(width=80, left=0)
 
-	# Create the individual windows
-	topWin = Window(t, top=0, height=3)
-	midWin = Window(t, top=3, height=12)
-	botWin = Window(t, top=15, height=5)
-	results = Window(t, top=20, height=4)
 
 	#xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 	#x End curse environment config
 	#xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
+	
+	########################################################
+	# Create menus 
+	########################################################
 
-	'''
-	# Show borders so we can see layout and adjust as needed
-	midWin.test("menu")
-	botWin.test("bottom")
-	topWin.test("Banner!")
-	results.test("Results")
-	'''
+	# Determine where to go after certain selections
+	#MENU_MAP
+
+	# Define main menus as functions just for namespace convenience
+	def mainMenu():
+		'''Home screen menu'''
+		# Create the individual windows
+		topWin = Window(t, top=0, height=3)
+		midWin = Window(t, top=3, height=5)
+		botWin = Window(t, top=8, height=5)
+		#topWin.test(); midWin.test(); botWin.test();
+
+		itemList = [
+				"Create a new snippet",
+				"Find a snippet",
+				"Browse snippets"
+				]
+		commandMap = (
+			('j', 'scrollDown'),
+			('k', 'scrollUp'),
+			('q', 'exit')
+		)
+
+		menu = Menu(midWin, itemList, commandMap, FORMAT)
+
+		topWin.write("SnipSnip! Local code snippet database")
+		botWin.write(menu.command_str())
+		topWin.draw(); botWin.draw();
+
+		selection = menu.activate(3, (1,1))
+
+		# Clear all the windows before we exit
+		topWin.clear(); midWin.clear(); botWin.clear();
+
+		return selection
+
+	#xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+	#x End menu creation
+	#xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
 
-	itemList = ["Item%d" % x for x in range(0,30)]
-	commandMap = (
-		('j', 'scrollDown'),
-		('k', 'scrollUp'),
-		('n', 'nextPage'),
-		('N', 'prevPage'),
-		('g', 'selectTop'),
-		('G', 'selectBottom'),
-		('q', 'exit')
-	)
+	# Get the (s)election
+	s = mainMenu()
 
+	return s
 
-
-	menu = Menu(midWin.win, itemList, commandMap, FORMAT)
-	botWin.flash(menu.command_str())
-	selection = menu.activate(9, (1,1))
-	results.flash("\nIndex selected: %d\n" % selection)
-
-# Actual execution begins here
-curses.wrapper(run)
+# Actual execution begins here. Call run() function as a callback of the 
+# curses wrapper so a lot of environmental things are handled by default.
+x = curses.wrapper(run)
+print x
