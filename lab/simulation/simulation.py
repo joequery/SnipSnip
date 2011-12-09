@@ -43,7 +43,7 @@ def run(stdscr):
 	########################################################
 
 	# Define main menus as functions just for namespace convenience
-	def mainMenu():
+	def mainMenu(*args):
 		'''Home screen menu'''
 
 		itemList = [
@@ -70,7 +70,7 @@ def run(stdscr):
 
 		return (index, selection)
 
-	def createNewMenu():
+	def createNewMenu(*args):
 		'''User selects what language they want to choose for new snippet'''
 		itemList = [
 				"Python",
@@ -87,8 +87,8 @@ def run(stdscr):
 			('j', 'scrollDown'),
 			('k', 'scrollUp'),
 			('q', 'exit'),
-			('l', 'nextPage'),
-			('h', 'prevPage'),
+			('n', 'nextPage'),
+			('N', 'prevPage'),
 			('b', 'back')
 		)
 
@@ -105,7 +105,42 @@ def run(stdscr):
 
 		return (index, selection)
 
-	def testMenu():
+	def findMenu(*args):
+		'''User selects what language they want to choose for finding snippet'''
+		itemList = [
+				"Python",
+				"jQuery",
+				"Ruby",
+				"Scala",
+				"Haskell",
+				"Lisp",
+				"C++",
+				"C",
+				"Objective C"
+				]
+		commandMap = (
+			('j', 'scrollDown'),
+			('k', 'scrollUp'),
+			('q', 'exit'),
+			('n', 'nextPage'),
+			('N', 'prevPage'),
+			('b', 'back')
+		)
+
+		menu = Menu(midWin, itemList, commandMap, FORMAT)
+
+		topWin.write("Find a code snippet!")
+		botWin.write(menu.command_str())
+		topWin.draw(); botWin.draw();
+
+		index, selection = menu.activate(5, (1,1))
+
+		# Clear all the windows before we exit
+		topWin.clear(); midWin.clear(); botWin.clear();
+
+		return (index, selection)
+
+	def testMenu(*args):
 		'''User selects what language they want to choose for new snippet'''
 		itemList = [
 				"Item0",
@@ -122,14 +157,15 @@ def run(stdscr):
 			('j', 'scrollDown'),
 			('k', 'scrollUp'),
 			('q', 'exit'),
-			('l', 'nextPage'),
-			('h', 'prevPage'),
+			('n', 'nextPage'),
+			('N', 'prevPage'),
 			('b', 'back')
 		)
 
 		menu = Menu(midWin, itemList, commandMap, FORMAT)
+		lang = args[0]
 
-		topWin.write("Test menu")
+		topWin.write("%s Programming Snippets" % lang)
 		botWin.write(menu.command_str())
 		topWin.draw(); botWin.draw();
 
@@ -140,6 +176,7 @@ def run(stdscr):
 		return (index, selection)
 
 
+	# MENU MAP
 	def get_next_menu(menu, index):
 		''' Determines where to go after leaving a menu.
 		menu: A menu function
@@ -148,20 +185,34 @@ def run(stdscr):
 		menuName = menu.__name__
 
 		def __mainMenu():
+			nextMenu = False;
 			if index == 0:
-				return createNewMenu
+				nextMenu = createNewMenu
+			elif index == 1:
+				nextMenu = findMenu
+			return nextMenu
+
+		def __findMenu():
+			nextMenu = False
+			if index == -1:
+				nextMenu = mainMenu
+			elif index >= 0:
+				nextMenu = testMenu
+			return nextMenu
 
 		def __createNewMenu():
+			nextMenu = False
 			if index == -1:
-				return mainMenu
-			elif index == 0:
-				return testMenu
+				nextMenu = mainMenu
+			elif index >= 0:
+				nextMenu = testMenu
+			return nextMenu
 
 		def __testMenu():
+			nextMenu = False
 			if index == -1:
-				return createNewMenu
-			else:
-				return False
+				nextMenu = createNewMenu
+			return nextMenu
 
 
 		# Execute the menu filter function
@@ -188,7 +239,7 @@ def run(stdscr):
 		keeplooping = True
 		while keeplooping:
 			# Get the index and selection value from the current menu
-			i,s = currentMenu()
+			i,s = currentMenu(s)
 
 			# Get the function of the next menu
 			currentMenu = get_next_menu(currentMenu, i)
