@@ -1,24 +1,8 @@
-
 Index: 0
+Current Menu: <function createNewMenu at 0x10055d2a8>
 Index: 0
+Current Menu: <function createNewMenu at 0x10055d2a8>
 Index: 0
-Index: -1
+Current Menu: <function createNewMenu at 0x10055f2a8>
 Index: 0
-Index: -1
-Index: 0
-Index: -1
-Index: 0
-Index: -1
-Index: 0
-Index: -1
-Index: 0
-Index: -1
-Index: 0
-Index: 0
-Index: -1
-Index: -1
-Index: 0
-Index: 0
-Index: -1
-Index: 0
-Index: 0
+Current Menu: <function createNewMenu at 0x10055d2a8>

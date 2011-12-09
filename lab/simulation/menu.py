@@ -219,7 +219,7 @@ class Menu:
 	def __exit(self):
 		'''Exit Menu'''
 		self.__FORCE_EXIT = True
-		self.__overallIndex = -2
+		self.__overallIndex = False
 
 	def __back(self):
 		'''Previous Menu'''

@@ -160,37 +160,47 @@ def run(stdscr):
 		def __testMenu():
 			if index == -1:
 				return createNewMenu
+			else:
+				return False
+
 
 		# Execute the menu filter function
 		filterFunc = locals()["__%s" % menuName]
 		newMenu = filterFunc()
 
-		return newMenu
+		# If no new menu, return the values!
+		if newMenu == False:
+			return False
+		else:
+			return newMenu
 
 	#xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 	#x End menu creation
 	#xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
-	currentMenu = mainMenu
+	def start_menu_cycle(menu):
+		'''Begin the menu cycle, starting at menu'''
+		currentMenu = menu
 
-	i = 0
-	s = 0
+		i = 0
+		s = 0
 
-	f = open("log.txt", 'a')
+		keeplooping = True
+		while keeplooping:
+			# Get the index and selection value from the current menu
+			i,s = currentMenu()
 
-	keeplooping = True
-	while keeplooping:
-		# Get the index and selection value from the current menu
-		i,s = currentMenu()
+			# Get the function of the next menu
+			currentMenu = get_next_menu(currentMenu, i)
 
-		# Get the function of the next menu
-		currentMenu = get_next_menu(currentMenu, i)
-		f.write("\nIndex: %d" % i)
-		keeplooping = i != -2
-	return s
+			if currentMenu == False:
+				keeplooping = False
+			
+			keeplooping = keeplooping and not i is False
+		return s
 
-	f.close()
-	
+	result = start_menu_cycle(mainMenu)
+	return result
 
 # Actual execution begins here. Call run() function as a callback of the 
 # curses wrapper so a lot of environmental things are handled by default.
