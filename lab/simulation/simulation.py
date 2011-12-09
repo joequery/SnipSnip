@@ -1,8 +1,7 @@
 # A simulation of the entire program! See docs/user.md
 
 import curses, os, math, tempfile
-from subprocess import call
-from menu import Menu
+from menu import *
 from curseshelpers import *
 
 def run(stdscr):
@@ -41,6 +40,35 @@ def run(stdscr):
 	########################################################
 	# Create menus 
 	########################################################
+	CATEGORIES = [
+			"Python",
+			"jQuery",
+			"Ruby",
+			"Scala",
+			"Haskell",
+			"Lisp",
+			"C++",
+			"C",
+			"Objective C"
+			]
+
+	def simple_menu(headline, itemList, commandMap, itemsPerPage):
+		'''Create a simple menu that has a headline, menu, and command
+		display. This is specific to this program to avoid repitition
+		'''
+
+		menu = Menu(midWin, itemList, commandMap, FORMAT)
+		topWin.write(headline)
+		botWin.write(menu.command_str())
+		topWin.draw(); botWin.draw();
+
+		index, selection = menu.activate(itemsPerPage, (1,1))
+
+		# Clear all the windows before we exit
+		topWin.clear(); midWin.clear(); botWin.clear();
+
+		return (index, selection)
+
 
 	# Define main menus as functions just for namespace convenience
 	def mainMenu(*args):
@@ -57,88 +85,37 @@ def run(stdscr):
 			('q', 'exit')
 		)
 
-		menu = Menu(midWin, itemList, commandMap, FORMAT)
-
-		topWin.write("SnipSnip! Local code snippet database")
-		botWin.write(menu.command_str())
-		topWin.draw(); botWin.draw();
-
-		index, selection = menu.activate(3, (1,1))
-
-		# Clear all the windows before we exit
-		topWin.clear(); midWin.clear(); botWin.clear();
-
-		return (index, selection)
+		headline = "Main Menu"
+		return simple_menu(headline, itemList, commandMap, 3)
 
 	def createNewMenu(*args):
 		'''User selects what language they want to choose for new snippet'''
-		itemList = [
-				"Python",
-				"jQuery",
-				"Ruby",
-				"Scala",
-				"Haskell",
-				"Lisp",
-				"C++",
-				"C",
-				"Objective C"
-				]
+		itemList = CATEGORIES
 		commandMap = (
 			('j', 'scrollDown'),
 			('k', 'scrollUp'),
-			('q', 'exit'),
 			('n', 'nextPage'),
 			('N', 'prevPage'),
 			('b', 'back')
 		)
 
-		menu = Menu(midWin, itemList, commandMap, FORMAT)
-
-		topWin.write("Create new code snippet")
-		botWin.write(menu.command_str())
-		topWin.draw(); botWin.draw();
-
-		index, selection = menu.activate(5, (1,1))
-
-		# Clear all the windows before we exit
-		topWin.clear(); midWin.clear(); botWin.clear();
-
-		return (index, selection)
+		headline = "Create New Snippet: Choose a language/framework"
+		return simple_menu(headline, itemList, commandMap, 5)
 
 	def findMenu(*args):
 		'''User selects what language they want to choose for finding snippet'''
-		itemList = [
-				"Python",
-				"jQuery",
-				"Ruby",
-				"Scala",
-				"Haskell",
-				"Lisp",
-				"C++",
-				"C",
-				"Objective C"
-				]
+		itemList = CATEGORIES
 		commandMap = (
 			('j', 'scrollDown'),
 			('k', 'scrollUp'),
-			('q', 'exit'),
 			('n', 'nextPage'),
 			('N', 'prevPage'),
 			('b', 'back')
 		)
 
-		menu = Menu(midWin, itemList, commandMap, FORMAT)
 
-		topWin.write("Find a code snippet!")
-		botWin.write(menu.command_str())
-		topWin.draw(); botWin.draw();
-
-		index, selection = menu.activate(5, (1,1))
-
-		# Clear all the windows before we exit
-		topWin.clear(); midWin.clear(); botWin.clear();
-
-		return (index, selection)
+		headline = "Find a code snippet: Choose a language/framework"
+		return simple_menu(headline, itemList, commandMap, 5)
 
 	def testMenu(*args):
 		'''User selects what language they want to choose for new snippet'''
@@ -156,7 +133,6 @@ def run(stdscr):
 		commandMap = (
 			('j', 'scrollDown'),
 			('k', 'scrollUp'),
-			('q', 'exit'),
 			('n', 'nextPage'),
 			('N', 'prevPage'),
 			('b', 'back')
@@ -164,16 +140,23 @@ def run(stdscr):
 
 		menu = Menu(midWin, itemList, commandMap, FORMAT)
 		lang = args[0]
+		headline = "%s Programming Snippets" % lang
+		return simple_menu(headline, itemList, commandMap, 5)
 
-		topWin.write("%s Programming Snippets" % lang)
-		botWin.write(menu.command_str())
-		topWin.draw(); botWin.draw();
+	def browseMenu(*args):
+		''' Browse code snippets '''
+		itemList = CATEGORIES
+		commandMap = (
+			('j', 'scrollDown'),
+			('k', 'scrollUp'),
+			('n', 'nextPage'),
+			('N', 'prevPage'),
+			('b', 'back')
+		)
 
-		index, selection = menu.activate(5, (1,1))
+		headline = "Browse snippets"
+		return simple_menu(headline, itemList, commandMap, 5)
 
-		# Clear all the windows before we exit
-		topWin.clear(); midWin.clear(); botWin.clear();
-		return (index, selection)
 
 
 	# MENU MAP
@@ -190,6 +173,8 @@ def run(stdscr):
 				nextMenu = createNewMenu
 			elif index == 1:
 				nextMenu = findMenu
+			elif index == 2:
+				nextMenu = browseMenu
 			return nextMenu
 
 		def __findMenu():
@@ -214,6 +199,14 @@ def run(stdscr):
 				nextMenu = createNewMenu
 			return nextMenu
 
+		def __browseMenu():
+			nextMenu = False
+			if index == -1:
+				nextMenu = mainMenu
+			elif index >= 0:
+				nextMenu = testMenu
+			return nextMenu
+
 
 		# Execute the menu filter function
 		filterFunc = locals()["__%s" % menuName]
@@ -229,29 +222,15 @@ def run(stdscr):
 	#x End menu creation
 	#xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
-	def start_menu_cycle(menu):
-		'''Begin the menu cycle, starting at menu'''
-		currentMenu = menu
 
-		i = 0
-		s = 0
+	result = start_menu_cycle(mainMenu, get_next_menu)
 
-		keeplooping = True
-		while keeplooping:
-			# Get the index and selection value from the current menu
-			i,s = currentMenu(s)
-
-			# Get the function of the next menu
-			currentMenu = get_next_menu(currentMenu, i)
-
-			if currentMenu == False:
-				keeplooping = False
-			
-			keeplooping = keeplooping and not i is False
-		return s
-
-	result = start_menu_cycle(mainMenu)
-	return result
+	if result:
+		# Run the text editor!
+		text = text_editor(result)
+		return text
+	else:
+		return "Program exited"
 
 # Actual execution begins here. Call run() function as a callback of the 
 # curses wrapper so a lot of environmental things are handled by default.
