@@ -107,7 +107,8 @@ class Menu:
 			return -1
 
 
-		return self.__overallIndex
+    # Return the index and the value
+		return (self.__overallIndex, self.itemList[self.__overallIndex])
 
 	def __display_menu_from_list(self, myList, activeIndex = False, coords = (0,0)):
 		'''
