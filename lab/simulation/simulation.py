@@ -137,8 +137,9 @@ def run(stdscr):
 		commandMap = STANDARD_MAP
 
 		headline = "Browse snippets"
+		return simple_menu(headline, itemList, commandMap, 5)
 
-
+	# MENU MAP
 	def get_next_menu(menu, index):
 		''' Determines where to go after leaving a menu.
 		menu: A menu function
