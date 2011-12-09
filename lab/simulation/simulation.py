@@ -87,13 +87,14 @@ def run(stdscr):
 			('j', 'scrollDown'),
 			('k', 'scrollUp'),
 			('q', 'exit'),
-			('h', 'nextPage'),
-			('l', 'prevPage')
+			('l', 'nextPage'),
+			('h', 'prevPage'),
+			('b', 'back')
 		)
 
 		menu = Menu(midWin, itemList, commandMap, FORMAT)
 
-		topWin.write("SnipSnip! Local code snippet database")
+		topWin.write("Create new code snippet")
 		botWin.write(menu.command_str())
 		topWin.draw(); botWin.draw();
 
@@ -104,30 +105,92 @@ def run(stdscr):
 
 		return (index, selection)
 
-	def next_menu(menu, index):
+	def testMenu():
+		'''User selects what language they want to choose for new snippet'''
+		itemList = [
+				"Item0",
+				"Item1",
+				"Item2",
+				"Item3",
+				"Item4",
+				"Item5",
+				"Item6",
+				"Item7",
+				"Item8"
+				]
+		commandMap = (
+			('j', 'scrollDown'),
+			('k', 'scrollUp'),
+			('q', 'exit'),
+			('l', 'nextPage'),
+			('h', 'prevPage'),
+			('b', 'back')
+		)
+
+		menu = Menu(midWin, itemList, commandMap, FORMAT)
+
+		topWin.write("Test menu")
+		botWin.write(menu.command_str())
+		topWin.draw(); botWin.draw();
+
+		index, selection = menu.activate(5, (1,1))
+
+		# Clear all the windows before we exit
+		topWin.clear(); midWin.clear(); botWin.clear();
+		return (index, selection)
+
+
+	def get_next_menu(menu, index):
 		''' Determines where to go after leaving a menu.
 		menu: A menu function
 		index: The index telling what menu to go to next
 		'''
 		menuName = menu.__name__
 
+		def __mainMenu():
+			if index == 0:
+				return createNewMenu
+
+		def __createNewMenu():
+			if index == -1:
+				return mainMenu
+			elif index == 0:
+				return testMenu
+
+		def __testMenu():
+			if index == -1:
+				return createNewMenu
+
 		# Execute the menu filter function
-		menuFunc = locals()["__%s" % menuName]
+		filterFunc = locals()["__%s" % menuName]
+		newMenu = filterFunc()
 
-
+		return newMenu
 
 	#xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 	#x End menu creation
 	#xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
+	currentMenu = mainMenu
 
-	# Get the (s)election
-	i, s = createNewMenu()
+	i = 0
+	s = 0
 
-	#while i != -1:
-		#s = createNewMenu()
+	f = open("log.txt", 'a')
 
+	keeplooping = True
+	while keeplooping:
+		# Get the index and selection value from the current menu
+		i,s = currentMenu()
+
+		# Get the function of the next menu
+		currentMenu = get_next_menu(currentMenu, i)
+		f.write("\nIndex: %d" % i)
+		keeplooping = i != -2
 	return s
+
+	f.close()
+	
 
 # Actual execution begins here. Call run() function as a callback of the 
 # curses wrapper so a lot of environmental things are handled by default.

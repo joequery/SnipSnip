@@ -25,6 +25,7 @@ class Menu:
 	selecTop
 	selectBottom
 	exit
+	back
 	'''
 
 	def __init__(self, window, itemList, commandMap, FORMAT):
@@ -99,12 +100,12 @@ class Menu:
 		self.win.refresh()
 
 		# Calculate the overall index of the selected item and return it, along
-		# with the relative index of the menu. A forced exit should return -1 so
-		# developer will know we've exited.
+		# with the relative index of the menu. A forced exit will contain a negative
+		# number: -2 for exit, -1 for back to previous menu 
 		if self.__FORCE_EXIT != True:
 			self.__overallIndex = self.__menuPage * self.__itemsPerPage + self.__selectedIndex
 		else:
-			return -1
+			return (self.__overallIndex, False)
 
 
     # Return the index and the value
@@ -217,5 +218,10 @@ class Menu:
 
 	def __exit(self):
 		'''Exit Menu'''
+		self.__FORCE_EXIT = True
+		self.__overallIndex = -2
+
+	def __back(self):
+		'''Previous Menu'''
 		self.__FORCE_EXIT = True
 		self.__overallIndex = -1
