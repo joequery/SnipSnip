@@ -218,7 +218,7 @@ class Menu:
 		self.__selectedIndex = 0
 
 	def __exit(self):
-		'''Exit Menu'''
+		'''Quit'''
 		self.__FORCE_EXIT = True
 		self.__overallIndex = False
 

@@ -52,6 +52,13 @@ def run(stdscr):
 			"Objective C"
 			]
 
+	STANDARD_MAP = (
+			('j', 'scrollDown'),
+			('k', 'scrollUp'),
+			('n', 'nextPage'),
+			('N', 'prevPage'),
+			('b', 'back')
+		)
 	def simple_menu(headline, itemList, commandMap, itemsPerPage):
 		'''Create a simple menu that has a headline, menu, and command
 		display. This is specific to this program to avoid repitition
@@ -91,13 +98,7 @@ def run(stdscr):
 	def createNewMenu(*args):
 		'''User selects what language they want to choose for new snippet'''
 		itemList = CATEGORIES
-		commandMap = (
-			('j', 'scrollDown'),
-			('k', 'scrollUp'),
-			('n', 'nextPage'),
-			('N', 'prevPage'),
-			('b', 'back')
-		)
+		commandMap = STANDARD_MAP
 
 		headline = "Create New Snippet: Choose a language/framework"
 		return simple_menu(headline, itemList, commandMap, 5)
@@ -105,14 +106,7 @@ def run(stdscr):
 	def findMenu(*args):
 		'''User selects what language they want to choose for finding snippet'''
 		itemList = CATEGORIES
-		commandMap = (
-			('j', 'scrollDown'),
-			('k', 'scrollUp'),
-			('n', 'nextPage'),
-			('N', 'prevPage'),
-			('b', 'back')
-		)
-
+		commandMap = STANDARD_MAP
 
 		headline = "Find a code snippet: Choose a language/framework"
 		return simple_menu(headline, itemList, commandMap, 5)
@@ -130,13 +124,7 @@ def run(stdscr):
 				"Item7",
 				"Item8"
 				]
-		commandMap = (
-			('j', 'scrollDown'),
-			('k', 'scrollUp'),
-			('n', 'nextPage'),
-			('N', 'prevPage'),
-			('b', 'back')
-		)
+		commandMap = STANDARD_MAP
 
 		menu = Menu(midWin, itemList, commandMap, FORMAT)
 		lang = args[0]
@@ -146,20 +134,11 @@ def run(stdscr):
 	def browseMenu(*args):
 		''' Browse code snippets '''
 		itemList = CATEGORIES
-		commandMap = (
-			('j', 'scrollDown'),
-			('k', 'scrollUp'),
-			('n', 'nextPage'),
-			('N', 'prevPage'),
-			('b', 'back')
-		)
+		commandMap = STANDARD_MAP
 
 		headline = "Browse snippets"
-		return simple_menu(headline, itemList, commandMap, 5)
 
 
-
-	# MENU MAP
 	def get_next_menu(menu, index):
 		''' Determines where to go after leaving a menu.
 		menu: A menu function
