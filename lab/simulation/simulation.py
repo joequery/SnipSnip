@@ -84,7 +84,8 @@ def run(stdscr):
 		itemList = [
 				"Create a new snippet",
 				"Find a snippet",
-				"Browse snippets"
+				"Browse snippets",
+				"Exit"
 				]
 		commandMap = (
 			('j', 'scrollDown'),
@@ -93,7 +94,7 @@ def run(stdscr):
 		)
 
 		headline = "Main Menu"
-		return simple_menu(headline, itemList, commandMap, 3)
+		return simple_menu(headline, itemList, commandMap, 4)
 
 	def createNewMenu(*args):
 		'''User selects what language they want to choose for new snippet'''
@@ -110,6 +111,26 @@ def run(stdscr):
 
 		headline = "Find a code snippet: Choose a language/framework"
 		return simple_menu(headline, itemList, commandMap, 5)
+
+	def createdMenu(*args):
+		'''User creats snippets and can create another or return to main menu'''
+		lang = args[0]
+
+		itemList = [
+				"Create another %s snippet" % lang,
+				"Create a different snippet",
+				"Back to main menu"
+				]
+		commandMap = (
+				('j', 'scrollDown'),
+				('k', 'scrollUp'),
+				('b', 'back'),
+		)
+
+		menu = Menu(midWin, itemList, commandMap, FORMAT)
+		headline = "%s Programming Snippets" % lang
+		index, selection = simple_menu(headline, itemList, commandMap, 3)
+		return (index, lang)
 
 	def testMenu(*args):
 		'''User selects what language they want to choose for new snippet'''
@@ -155,6 +176,8 @@ def run(stdscr):
 				nextMenu = findMenu
 			elif index == 2:
 				nextMenu = browseMenu
+			elif index == 3:
+				exit(0)
 			return nextMenu
 
 		def __findMenu():
@@ -170,7 +193,17 @@ def run(stdscr):
 			if index == -1:
 				nextMenu = mainMenu
 			elif index >= 0:
-				nextMenu = testMenu
+				nextMenu = createdMenu
+			return nextMenu
+
+		def __createdMenu():
+			nextMenu = False
+			if index == 0:
+				nextMenu = createdMenu
+			elif index == 1 or index == -1:
+				nextMenu = createNewMenu
+			elif index == 2:
+				nextMenu = mainMenu
 			return nextMenu
 
 		def __testMenu():
