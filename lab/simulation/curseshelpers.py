@@ -76,9 +76,11 @@ class Window:
 		'''
 
 		# Turn on echo of input text and blinking cursor.
+		curses.curs_set(1)  
 		curses.echo()
 		text = self.win.getstr()
 		curses.noecho()
+		curses.curs_set(0)  
 		return text
 
 def file_name_from_string(theStr):
@@ -97,13 +99,11 @@ def text_editor(fileName):
 	snipDir = "snippets"
 	fullPath = os.path.join(snipDir, fileName)
 
-	'''
 	# Try to open the file for updating if it exists. If it doesn't exist,
 	# open the file in write mode.
 	content = ""
 	try:
-		f = open(fullPath, 'r+')
-		content += f.read()
+		f = open(fullPath, 'r')
 	except:
 		f = open(fullPath, 'w')
 
@@ -111,13 +111,6 @@ def text_editor(fileName):
 	# up the fullPath file and be done with it, the cursor will begin to blink
 	# once we go back to the menu, no matter how many times we alter the curs_set
 	# variable. Weeeeeeird.
-	with tempfile.NamedTemporaryFile(suffix=".tmp") as tmpfile:
-		tmpfile.write(content)
-		tmpfile.flush()
-		subprocess.call([EDITOR, tmpfile.name])
-		content += tmpfile.read()
-
-	f.write(content)
+	#with tempfile.NamedTemporaryFile(suffix=".tmp") as tmpfile:
+	subprocess.call([EDITOR, f.name])
 	f.close()
-	'''
-	subprocess.call(["vim", "log.txt"], shell=True)
