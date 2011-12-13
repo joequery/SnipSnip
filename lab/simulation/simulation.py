@@ -10,6 +10,10 @@ def run(stdscr):
 	# Configure the curses environment
 	########################################################
 	curses.curs_set(0)  # Hide cursor
+	
+	f = open("log.txt", 'w')
+	f.write(str(dir(stdscr)))
+	f.close()
 
 	# Plain: Green text on black background
 	curses.init_pair(1, curses.COLOR_GREEN, curses.COLOR_BLACK)
@@ -112,9 +116,16 @@ def run(stdscr):
 		headline = "Find a code snippet: Choose a language/framework"
 		return simple_menu(headline, itemList, commandMap, 5)
 
-	def createdMenu(*args):
+	def createSnippet(*args):
 		'''User creats snippets and can create another or return to main menu'''
 		lang = args[0]
+		
+		# Get description of snippet
+		topWin.flash("New %s snippet" % lang)
+		midWin.flash("Snippet description: ")
+		description = midWin.read()
+		text_editor(file_name_from_string(description))
+		midWin.clear(); topWin.clear();botWin.clear();
 
 		itemList = [
 				"Create another %s snippet" % lang,
@@ -125,7 +136,9 @@ def run(stdscr):
 				('j', 'scrollDown'),
 				('k', 'scrollUp'),
 				('b', 'back'),
+				('q', 'exit'),
 		)
+
 
 		menu = Menu(midWin, itemList, commandMap, FORMAT)
 		headline = "%s Programming Snippets" % lang
@@ -193,13 +206,13 @@ def run(stdscr):
 			if index == -1:
 				nextMenu = mainMenu
 			elif index >= 0:
-				nextMenu = createdMenu
+				nextMenu = createSnippet
 			return nextMenu
 
-		def __createdMenu():
+		def __createSnippet():
 			nextMenu = False
 			if index == 0:
-				nextMenu = createdMenu
+				nextMenu = createSnippet
 			elif index == 1 or index == -1:
 				nextMenu = createNewMenu
 			elif index == 2:
@@ -225,27 +238,15 @@ def run(stdscr):
 		filterFunc = locals()["__%s" % menuName]
 		newMenu = filterFunc()
 
-		# If no new menu, return the values!
-		if newMenu == False:
-			return False
-		else:
-			return newMenu
+		return newMenu
 
 	#xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 	#x End menu creation
 	#xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
 
-	result = start_menu_cycle(mainMenu, get_next_menu)
-
-	if result:
-		# Run the text editor!
-		text = text_editor(result)
-		return text
-	else:
-		return "Program exited"
+	start_menu_cycle(mainMenu, get_next_menu)
 
 # Actual execution begins here. Call run() function as a callback of the 
 # curses wrapper so a lot of environmental things are handled by default.
-x = curses.wrapper(run)
-print x
+curses.wrapper(run)

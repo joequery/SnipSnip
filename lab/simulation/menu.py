@@ -1,6 +1,5 @@
 # Menu class. Allows for extremely customizable windows using Curses
 import curses, math, os, tempfile
-from subprocess import call
 
 class Menu:
 	'''
@@ -247,19 +246,4 @@ def start_menu_cycle(menu, menuCycler):
 			keeplooping = False
 		
 		keeplooping = keeplooping and not i is False
-	return s
 
-def text_editor(initial_message=""):
-	'''
-	Launch the text editor represented by the EDITOR environment
-	variable
-	From stack overflow (http://bit.ly/tBzqgz)
-	'''
-	EDITOR = os.environ.get('EDITOR','vim') #that easy!
-
-	with tempfile.NamedTemporaryFile(suffix=".tmp") as tmpfile:
-		tmpfile.write(initial_message + "\n")
-		tmpfile.flush()
-		call([EDITOR, tmpfile.name])
-		return tmpfile.read()
-		# do the parsing with `tempfile` using regular File operations

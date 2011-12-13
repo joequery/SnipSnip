@@ -1,5 +1,5 @@
 # Curses wrappers and helpers!
-import curses
+import curses, os, base64, subprocess, tempfile, sys
 
 class WindowTemplate:
 	'''
@@ -69,3 +69,55 @@ class Window:
 		'''
 		self.win.clear()
 		self.win.refresh()
+
+	def read(self):
+		'''
+		Read a string, execute necessary configurations
+		'''
+
+		# Turn on echo of input text and blinking cursor.
+		curses.echo()
+		text = self.win.getstr()
+		curses.noecho()
+		return text
+
+def file_name_from_string(theStr):
+	return base64.urlsafe_b64encode(theStr)
+
+def string_from_file_name(fileName):
+	return base64.urlsafe_b64decode(fileName)
+
+def text_editor(fileName):
+	'''
+	Launch the text editor represented by the EDITOR environment
+	variable
+	From stack overflow (http://bit.ly/tBzqgz)
+	'''
+	EDITOR = os.environ.get('EDITOR','vim') 
+	snipDir = "snippets"
+	fullPath = os.path.join(snipDir, fileName)
+
+	'''
+	# Try to open the file for updating if it exists. If it doesn't exist,
+	# open the file in write mode.
+	content = ""
+	try:
+		f = open(fullPath, 'r+')
+		content += f.read()
+	except:
+		f = open(fullPath, 'w')
+
+	# Open up the default text editor. For some reason, if we were to just open
+	# up the fullPath file and be done with it, the cursor will begin to blink
+	# once we go back to the menu, no matter how many times we alter the curs_set
+	# variable. Weeeeeeird.
+	with tempfile.NamedTemporaryFile(suffix=".tmp") as tmpfile:
+		tmpfile.write(content)
+		tmpfile.flush()
+		subprocess.call([EDITOR, tmpfile.name])
+		content += tmpfile.read()
+
+	f.write(content)
+	f.close()
+	'''
+	subprocess.call(["vim", "log.txt"], shell=True)
