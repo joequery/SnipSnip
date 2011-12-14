@@ -36,7 +36,7 @@ class Searcher:
 		'''
 
 		self.get_writer()
-		fileName = file_name_from_string(description)
+		fileName = file_name_from_string(description+lang)
 		self.writer.add_document(
 				description = unicode(description),
 				path = unicode(fileName),
@@ -56,7 +56,8 @@ class Searcher:
 			qp = QueryParser("description", self.ix.schema)
 			query = qp.parse(unicode("(%s) AND (lang:%s)" % (searchStr, lang)))
 			results = searcher.search(query)
-		return results
+			returnThis = [ [x['description'], x['path']] for x in results]
+			return returnThis
 
 	def get_lang(self, lang):
 		'''
@@ -65,7 +66,6 @@ class Searcher:
 		with self.ix.searcher() as searcher:
 			qp = QueryParser("lang", self.ix.schema)
 			query = qp.parse(unicode(lang))
-			print query
 			results = searcher.search(query)
 			returnThis = [x['description'] for x in results]
 			return returnThis
@@ -78,3 +78,5 @@ class Searcher:
 		text_editor(fileName)
 
 GoogleBot = Searcher("indexdir")
+#result = GoogleBot.search("Hello World", "c++")
+#print result[0]

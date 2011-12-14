@@ -101,7 +101,9 @@ def run(stdscr):
 		index, selection = simple_menu(headline, itemList, commandMap, 4, argList)
 		return index, selection, True
 
-
+	########################################################
+	# Searching
+	########################################################
 	def findMenu(argList):
 		'''User selects what language they want to choose for finding snippet'''
 		itemList = CATEGORIES
@@ -111,30 +113,42 @@ def run(stdscr):
 		index, selection = simple_menu(headline, itemList, commandMap, 5, argList)
 		return index, selection, True
 
-	def testMenu(argList):
-		'''User selects what language they want to choose for new snippet'''
-		itemList = [
-				"Item0",
-				"Item1",
-				"Item2",
-				"Item3",
-				"Item4",
-				"Item5",
-				"Item6",
-				"Item7",
-				"Item8"
-				]
-		commandMap = STANDARD_MAP
-
-		menu = Menu(midWin, itemList, commandMap, FORMAT)
+	def searchResults(argList):
+		'''User creats snippets and can create another or return to main menu'''
 		lang = argList[1]
-		headline = "%s Programming Snippets" % lang
-		index, selection = simple_menu(headline, itemList, commandMap, 5, argList)
-		return index, selection, True
+		
+		while True:
+			# Get description of snippet
+			topWin.flash("Find a %s snippet" % lang)
+			midWin.flash("Snippet query (CTRL-C to escape): ")
+			try:
+				query = midWin.read()
+				midWin.clear(); topWin.clear();botWin.clear();
 
+				results = GoogleBot.search(query, lang)
+				itemList = [x[0] for x in results]
+				pathList = [x[1] for x in results]
+
+				#itemList = CATEGORIES
+				commandMap = (
+						('j', 'scrollDown'),
+						('k', 'scrollUp'),
+						('b', 'back'),
+						('q', 'exit'),
+				)
+
+				menu = Menu(midWin, itemList, commandMap, FORMAT)
+				headline = "Search Results: %s" % query
+
+				index, selection = simple_menu(headline, itemList, commandMap, 3, argList)
+				text_editor(file_name_from_string(selection + lang))
+				midWin.clear(); topWin.clear();botWin.clear();
+			except KeyboardInterrupt:
+				midWin.clear(); topWin.clear();botWin.clear();
+				return -1, 0, None
 
 	########################################################
-	# Searching
+	# Creating 
 	########################################################
 	def createNewMenu(argList):
 		'''User selects what language they want to choose for new snippet'''
@@ -149,29 +163,18 @@ def run(stdscr):
 		'''User creats snippets and can create another or return to main menu'''
 		lang = argList[1]
 		
-		# Get description of snippet
-		topWin.flash("New %s snippet" % lang)
-		midWin.flash("Snippet description: ")
-		description = midWin.read()
-		GoogleBot.add_snippet_to_index(description, lang)
-		midWin.clear(); topWin.clear();botWin.clear();
+		while True:
+			# Get description of snippet
+			topWin.flash("New %s snippet" % lang)
+			midWin.flash("Snippet description: (CTRL-C to escape)")
+			try:
+				description = midWin.read()
+				GoogleBot.add_snippet_to_index(description, lang)
+				midWin.clear(); topWin.clear();botWin.clear();
 
-		itemList = [
-				"Create another %s snippet" % lang,
-				"Create a different snippet"
-				]
-		commandMap = (
-				('j', 'scrollDown'),
-				('k', 'scrollUp'),
-				('b', 'back'),
-				('q', 'exit'),
-		)
-
-
-		menu = Menu(midWin, itemList, commandMap, FORMAT)
-		headline = "%s Programming Snippets" % lang
-		index, selection = simple_menu(headline, itemList, commandMap, 3, argList)
-		return index, selection, None
+			except KeyboardInterrupt:
+				midWin.clear(); topWin.clear();botWin.clear();
+				return -1, 0, None
 
 	########################################################
 	# Browsing
@@ -200,7 +203,7 @@ def run(stdscr):
 		# If user exits, don't attempt to get selected item (since it wasn't selected)
 		if index != -1:
 			description = selection
-			text_editor(file_name_from_string(description))
+			text_editor(file_name_from_string(description + lang))
 		topWin.clear(); midWin.clear(); botWin.clear();
 		return index, selection, None
 
@@ -229,7 +232,15 @@ def run(stdscr):
 			if index == -1:
 				nextMenu = mainMenu
 			elif index >= 0:
-				nextMenu = testMenu
+				nextMenu = searchResults
+			return nextMenu
+
+		def __searchResults():
+			nextMenu = False
+			if index == -1:
+				nextMenu = findMenu
+			elif index >= 0:
+				nextMenu = searchResults
 			return nextMenu
 
 		def __createNewMenu():
@@ -245,12 +256,6 @@ def run(stdscr):
 			if index == 0:
 				nextMenu = createSnippet
 			elif index == 1 or index == -1:
-				nextMenu = createNewMenu
-			return nextMenu
-
-		def __testMenu():
-			nextMenu = False
-			if index == -1:
 				nextMenu = createNewMenu
 			return nextMenu
 
