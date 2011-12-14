@@ -66,7 +66,7 @@ class Searcher:
 		with self.ix.searcher() as searcher:
 			qp = QueryParser("lang", self.ix.schema)
 			query = qp.parse(unicode(lang))
-			results = searcher.search(query)
+			results = searcher.search(query, sortedby="description", reverse=True)
 			returnThis = [x['description'] for x in results]
 			return returnThis
 	
