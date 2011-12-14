@@ -174,11 +174,13 @@ class Menu:
 
 	def __scrollUp(self):
 		'''Scroll Up'''
-		self.__selectedIndex = (self.__selectedIndex - 1) % self.__displaySize
+		if len(self.itemList) > 0:
+			self.__selectedIndex = (self.__selectedIndex - 1) % self.__displaySize
 
 	def __scrollDown(self):
 		'''Scroll Down'''
-		self.__selectedIndex = (self.__selectedIndex + 1) % self.__displaySize
+		if len(self.itemList) > 0:
+			self.__selectedIndex = (self.__selectedIndex + 1) % self.__displaySize
 
 	def __nextPage(self):
 		'''Next Page'''

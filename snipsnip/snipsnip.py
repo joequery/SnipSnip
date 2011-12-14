@@ -166,7 +166,7 @@ def run(stdscr):
 		while True:
 			# Get description of snippet
 			topWin.flash("New %s snippet" % lang)
-			midWin.flash("Snippet description: (CTRL-C to escape)")
+			midWin.flash("Snippet description (CTRL-C to escape): ")
 			try:
 				description = midWin.read()
 				GoogleBot.add_snippet_to_index(description, lang)
