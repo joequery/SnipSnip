@@ -1,8 +1,9 @@
-# A simulation of the entire program! See docs/user.md
+# Local code storage! Let's get it working, then we'll make it neat.
 
 import curses, os, math, tempfile
 from menu import *
 from curseshelpers import *
+from search import GoogleBot
 
 def run(stdscr):
 
@@ -11,10 +12,6 @@ def run(stdscr):
 	########################################################
 	curses.curs_set(0)  # Hide cursor
 	
-	f = open("log.txt", 'w')
-	f.write(str(dir(stdscr)))
-	f.close()
-
 	# Plain: Green text on black background
 	curses.init_pair(1, curses.COLOR_GREEN, curses.COLOR_BLACK)
 
@@ -36,14 +33,11 @@ def run(stdscr):
 	botWin = Window(t, top=11, height=5)
 	#topWin.test(); midWin.test(); botWin.test();
 
-	#xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-	#x End curse environment config
-	#xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-
-	
 	########################################################
 	# Create menus 
 	########################################################
+
+	# We'll get this from a file later.
 	CATEGORIES = [
 			"Python",
 			"jQuery",
@@ -55,6 +49,7 @@ def run(stdscr):
 			"C",
 			"Objective C"
 			]
+	CATEGORIES = sorted(CATEGORIES, key = str.lower)
 
 	STANDARD_MAP = (
 			('j', 'scrollDown'),
@@ -116,35 +111,6 @@ def run(stdscr):
 		headline = "Find a code snippet: Choose a language/framework"
 		return simple_menu(headline, itemList, commandMap, 5)
 
-	def createSnippet(*args):
-		'''User creats snippets and can create another or return to main menu'''
-		lang = args[0]
-		
-		# Get description of snippet
-		topWin.flash("New %s snippet" % lang)
-		midWin.flash("Snippet description: ")
-		description = midWin.read()
-		text_editor(file_name_from_string(description))
-		midWin.clear(); topWin.clear();botWin.clear();
-
-		itemList = [
-				"Create another %s snippet" % lang,
-				"Create a different snippet",
-				"Back to main menu"
-				]
-		commandMap = (
-				('j', 'scrollDown'),
-				('k', 'scrollUp'),
-				('b', 'back'),
-				('q', 'exit'),
-		)
-
-
-		menu = Menu(midWin, itemList, commandMap, FORMAT)
-		headline = "%s Programming Snippets" % lang
-		index, selection = simple_menu(headline, itemList, commandMap, 3)
-		return (index, lang)
-
 	def testMenu(*args):
 		'''User selects what language they want to choose for new snippet'''
 		itemList = [
@@ -172,6 +138,40 @@ def run(stdscr):
 
 		headline = "Browse snippets"
 		return simple_menu(headline, itemList, commandMap, 5)
+
+	########################################################
+	# Non trivial menus
+	########################################################
+
+
+	def createSnippet(*args):
+		'''User creats snippets and can create another or return to main menu'''
+		lang = args[0]
+		
+		# Get description of snippet
+		topWin.flash("New %s snippet" % lang)
+		midWin.flash("Snippet description: ")
+		description = midWin.read()
+		GoogleBot.add_snippet_to_index(description, lang)
+		midWin.clear(); topWin.clear();botWin.clear();
+
+		itemList = [
+				"Create another %s snippet" % lang,
+				"Create a different snippet",
+				"Back to main menu"
+				]
+		commandMap = (
+				('j', 'scrollDown'),
+				('k', 'scrollUp'),
+				('b', 'back'),
+				('q', 'exit'),
+		)
+
+
+		menu = Menu(midWin, itemList, commandMap, FORMAT)
+		headline = "%s Programming Snippets" % lang
+		index, selection = simple_menu(headline, itemList, commandMap, 3)
+		return (index, lang)
 
 	# MENU MAP
 	def get_next_menu(menu, index):
@@ -239,11 +239,6 @@ def run(stdscr):
 		newMenu = filterFunc()
 
 		return newMenu
-
-	#xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-	#x End menu creation
-	#xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-
 
 	start_menu_cycle(mainMenu, get_next_menu)
 
