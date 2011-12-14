@@ -135,9 +135,6 @@ def run(stdscr):
 		lang = argList[1]
 		query = argList[2]
 		
-		# Get description of snippet
-		topWin.flash("Search results")
-
 		results = GoogleBot.search(query, lang)
 		itemList = [x[0] for x in results]
 		pathList = [x[1] for x in results]
@@ -156,7 +153,7 @@ def run(stdscr):
 		index, selection = simple_menu(headline, itemList, commandMap, 3, argList)
 
 		# If user exits, don't attempt to get selected item (since it wasn't selected)
-		if index != -1:
+		if index not in [-1, False]:
 			text_editor(file_name_from_string(selection + lang))
 		midWin.clear(); topWin.clear();botWin.clear();
 
@@ -277,7 +274,7 @@ def run(stdscr):
 			if index == -1:
 				nextMenu = mainMenu
 			elif index >= 0:
-				nextMenu = enterQuery
+				nextMenu = createSnippet
 			return nextMenu
 
 		def __createSnippet():
