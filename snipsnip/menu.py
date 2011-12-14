@@ -235,26 +235,27 @@ def start_menu_cycle(menu, menuCycler):
 	s = 0
 
 	keeplooping = True
-	argList = [s]
+	argList = []
 	while keeplooping:
 		# Get the index and selection value from the current menu
 		i,s,p = currentMenu(argList)
 
-		# Get the function of the next menu
-		currentMenu = menuCycler(currentMenu, i)
 
-		if p is not None:
-			if p is True:
-				argList.append(s)
-			else:
-				argList.pop()
+		if i == -1:
+			argList.pop()
+		else:
+			if p is not None:
+				if p is True:
+					argList.append(s)
+				else:
+					argList.pop()
 
-		if p is True and i == -1:
-			argList.pop()
-			argList.pop()
 
 		if currentMenu == False:
 			keeplooping = False
 		
+		# Get the function of the next menu
+		currentMenu = menuCycler(currentMenu, i)
+
 		keeplooping = keeplooping and not i is False
 
