@@ -13,12 +13,18 @@ class Searcher:
 		# Open the index if it exists
 		try:
 			self.ix = open_dir(indexdir)
-			print "FOUND"
 		except EmptyIndexError:
 			self.ix = create_in(indexdir, schema)
 		self.writer = self.ix.writer()
 
 	def add_snippet_to_index(self, description, lang):
+		''' Add a new code snippet to the index.
+		description: description of the index
+		lang: the language/framework.
+		
+		s.add_snippet_to_index("Append to list", "Python")
+		'''
+
 		fileName = file_name_from_string(description)
 		self.writer.add_document(
 				description = unicode(description),
@@ -28,12 +34,34 @@ class Searcher:
 		text_editor(fileName)
 		self.writer.commit()
 	
-	@staticmethod
 	def search(self, searchStr, lang):
+		''' Search for a code snippet based off a search string (searchStr)
+		and the language
+
+		s.search("How to append to a list", "Python")
+		'''
 		with self.ix.searcher() as searcher:
 			qp = QueryParser("description", self.ix.schema, group=OrGroup)
 			query = qp.parse(unicode("(%s) AND (lang:%s)" % (searchStr, lang)))
 			results = searcher.search(query)
 		return results
+
+	def get_lang(self, lang):
+		'''
+		Get all results matching the language
+		'''
+		with self.ix.searcher() as searcher:
+			qp = QueryParser("lang", self.ix.schema)
+			query = qp.parse(unicode(lang))
+			results = searcher.search(query)
+			returnThis = [x['description'] for x in results]
+			return returnThis
+	
+	def open_snippet(self, description):
+		'''
+		Open the snippet from the description in the text editor
+		'''
+		fileName = file_name_from_string(description)
+		text_editor(fileName)
 
 GoogleBot = Searcher("indexdir")

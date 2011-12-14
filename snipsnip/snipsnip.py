@@ -30,7 +30,7 @@ def run(stdscr):
 	# Create the individual windows
 	topWin = Window(t, top=0, height=3)
 	midWin = Window(t, top=3, height=8)
-	botWin = Window(t, top=11, height=5)
+	botWin = Window(t, top=11, height=10)
 	#topWin.test(); midWin.test(); botWin.test();
 
 	########################################################
@@ -58,7 +58,7 @@ def run(stdscr):
 			('N', 'prevPage'),
 			('b', 'back')
 		)
-	def simple_menu(headline, itemList, commandMap, itemsPerPage):
+	def simple_menu(headline, itemList, commandMap, itemsPerPage, argList):
 		'''Create a simple menu that has a headline, menu, and command
 		display. This is specific to this program to avoid repitition
 		'''
@@ -66,7 +66,10 @@ def run(stdscr):
 		menu = Menu(midWin, itemList, commandMap, FORMAT)
 		topWin.write(headline)
 		botWin.write(menu.command_str())
+		botWin.write("\n")
+		botWin.write(str(argList))
 		topWin.draw(); botWin.draw();
+
 
 		index, selection = menu.activate(itemsPerPage, (1,1))
 
@@ -76,8 +79,10 @@ def run(stdscr):
 		return (index, selection)
 
 
-	# Define main menus as functions just for namespace convenience
-	def mainMenu(*args):
+	########################################################
+	# Main Menu
+	########################################################
+	def mainMenu(argList):
 		'''Home screen menu'''
 
 		itemList = [
@@ -93,25 +98,26 @@ def run(stdscr):
 		)
 
 		headline = "Main Menu"
-		return simple_menu(headline, itemList, commandMap, 4)
+		index, selection = simple_menu(headline, itemList, commandMap, 4, argList)
+		return index, selection, None
 
-	def createNewMenu(*args):
+	def createNewMenu(argList):
 		'''User selects what language they want to choose for new snippet'''
 		itemList = CATEGORIES
 		commandMap = STANDARD_MAP
 
 		headline = "Create New Snippet: Choose a language/framework"
-		return simple_menu(headline, itemList, commandMap, 5)
+		return simple_menu(headline, itemList, commandMap, 5, argList)
 
-	def findMenu(*args):
+	def findMenu(argList):
 		'''User selects what language they want to choose for finding snippet'''
 		itemList = CATEGORIES
 		commandMap = STANDARD_MAP
 
 		headline = "Find a code snippet: Choose a language/framework"
-		return simple_menu(headline, itemList, commandMap, 5)
+		return simple_menu(headline, itemList, commandMap, 5, argList)
 
-	def testMenu(*args):
+	def testMenu(argList):
 		'''User selects what language they want to choose for new snippet'''
 		itemList = [
 				"Item0",
@@ -127,26 +133,18 @@ def run(stdscr):
 		commandMap = STANDARD_MAP
 
 		menu = Menu(midWin, itemList, commandMap, FORMAT)
-		lang = args[0]
+		lang = args
 		headline = "%s Programming Snippets" % lang
-		return simple_menu(headline, itemList, commandMap, 5)
-
-	def browseMenu(*args):
-		''' Browse code snippets '''
-		itemList = CATEGORIES
-		commandMap = STANDARD_MAP
-
-		headline = "Browse snippets"
-		return simple_menu(headline, itemList, commandMap, 5)
+		return simple_menu(headline, itemList, commandMap, 5, argList)
 
 	########################################################
 	# Non trivial menus
 	########################################################
 
 
-	def createSnippet(*args):
+	def createSnippet(argList):
 		'''User creats snippets and can create another or return to main menu'''
-		lang = args[0]
+		lang = args
 		
 		# Get description of snippet
 		topWin.flash("New %s snippet" % lang)
@@ -170,8 +168,53 @@ def run(stdscr):
 
 		menu = Menu(midWin, itemList, commandMap, FORMAT)
 		headline = "%s Programming Snippets" % lang
-		index, selection = simple_menu(headline, itemList, commandMap, 3)
-		return (index, lang)
+		return simple_menu(headline, itemList, commandMap, 3, argList)
+
+
+	########################################################
+	# Browsing
+	########################################################
+
+	def browseMenu(argList):
+		''' User selets what language to browse code snippets'''
+		itemList = CATEGORIES
+		commandMap = STANDARD_MAP
+
+		headline = "Browse snippets"
+		index, selection = simple_menu(headline, itemList, commandMap, 5, argList)
+		return index, selection, True
+
+	def browseLangSnippets(argList):
+		''' User has chosen a language, now show snippet'''
+		lang = argList[1]
+		results = GoogleBot.get_lang(lang)
+		itemList = [x for x in results]
+
+		commandMap = STANDARD_MAP
+
+		menu = Menu(midWin, itemList, commandMap, FORMAT)
+		headline = "%s Programming Snippets" % lang
+		index, selection = simple_menu(headline, itemList, commandMap, 5, argList)
+		return index, selection, True
+
+	def browseLangDisplaySnippet(argList):
+
+		''' User has chosen a language, now show snippet'''
+		
+		lang = argList[1]
+		description = argList[2]
+		text_editor(file_name_from_string(description))
+		topWin.clear(); midWin.clear(); botWin.clear();
+
+		results = GoogleBot.get_lang(lang)
+		itemList = [x for x in results]
+
+		commandMap = STANDARD_MAP
+
+		menu = Menu(midWin, itemList, commandMap, FORMAT)
+		headline = "View more %s Programming Snippets" % lang
+		index, selection = simple_menu(headline, itemList, commandMap, 5, argList)
+		return index, selection, False
 
 	# MENU MAP
 	def get_next_menu(menu, index):
@@ -230,8 +273,27 @@ def run(stdscr):
 			if index == -1:
 				nextMenu = mainMenu
 			elif index >= 0:
-				nextMenu = testMenu
+				nextMenu = browseLangSnippets
 			return nextMenu
+
+		def __browseLangSnippets():
+			nextMenu = False
+			if index == -1:
+				nextMenu = browseMenu
+			if index >= 0:
+				nextMenu = browseLangDisplaySnippet
+			return nextMenu
+
+		def __browseLangDisplaySnippet():
+			nextMenu = False
+			if index == -1:
+				nextMenu = browseMenu
+			if index >= 0:
+				nextMenu = browseLangDisplaySnippet
+			return nextMenu
+
+
+
 
 
 		# Execute the menu filter function

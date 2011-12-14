@@ -62,9 +62,9 @@ class Menu:
 		self.__selectedIndex = 0
 		self.__menuPage = 0
 		self.__numMenuPages = math.ceil(len(self.itemList) * 1.0 / itemsPerPage)
-		self.__displaySize = itemsPerPage
+		self.__itemsPerPage = min(itemsPerPage, len(self.itemList))
+		self.__displaySize = self.__itemsPerPage
 		self.__menuList = self.itemList[0:self.__displaySize]
-		self.__itemsPerPage = itemsPerPage
 		self.__overallIndex = 0
 
 		###############################################################
@@ -235,12 +235,23 @@ def start_menu_cycle(menu, menuCycler):
 	s = 0
 
 	keeplooping = True
+	argList = [s]
 	while keeplooping:
 		# Get the index and selection value from the current menu
-		i,s = currentMenu(s)
+		i,s,p = currentMenu(argList)
 
 		# Get the function of the next menu
 		currentMenu = menuCycler(currentMenu, i)
+
+		if p is not None:
+			if p is True:
+				argList.append(s)
+			else:
+				argList.pop()
+
+		if p is True and i == -1:
+			argList.pop()
+			argList.pop()
 
 		if currentMenu == False:
 			keeplooping = False
