@@ -1,7 +1,14 @@
 from whoosh.index import create_in, open_dir, EmptyIndexError
 from whoosh.fields import *
 from whoosh.qparser import QueryParser, OrGroup
-schema = Schema(description=TEXT(stored=True), path=ID(stored=True), lang=TEXT)
+from whoosh.analysis import RegexTokenizer, LowercaseFilter, StandardAnalyzer
+ana = StandardAnalyzer(
+    expression=re.compile(r"[\w\-+]+(\.?[\w\-]+)*", re.UNICODE),
+    stoplist=None,
+    minsize=0
+)
+
+schema = Schema(description=TEXT(stored=True), path=ID(stored=True), lang=TEXT(analyzer=ana, multitoken_query="phrase"))
 from curseshelpers import *
 
 class Searcher:
@@ -15,6 +22,9 @@ class Searcher:
 			self.ix = open_dir(indexdir)
 		except EmptyIndexError:
 			self.ix = create_in(indexdir, schema)
+		self.indexdir = indexdir
+
+	def get_writer(self):
 		self.writer = self.ix.writer()
 
 	def add_snippet_to_index(self, description, lang):
@@ -25,6 +35,7 @@ class Searcher:
 		s.add_snippet_to_index("Append to list", "Python")
 		'''
 
+		self.get_writer()
 		fileName = file_name_from_string(description)
 		self.writer.add_document(
 				description = unicode(description),
@@ -41,7 +52,8 @@ class Searcher:
 		s.search("How to append to a list", "Python")
 		'''
 		with self.ix.searcher() as searcher:
-			qp = QueryParser("description", self.ix.schema, group=OrGroup)
+			#qp = QueryParser("description", self.ix.schema, group=OrGroup)
+			qp = QueryParser("description", self.ix.schema)
 			query = qp.parse(unicode("(%s) AND (lang:%s)" % (searchStr, lang)))
 			results = searcher.search(query)
 		return results
@@ -53,6 +65,7 @@ class Searcher:
 		with self.ix.searcher() as searcher:
 			qp = QueryParser("lang", self.ix.schema)
 			query = qp.parse(unicode(lang))
+			print query
 			results = searcher.search(query)
 			returnThis = [x['description'] for x in results]
 			return returnThis

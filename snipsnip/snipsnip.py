@@ -108,7 +108,8 @@ def run(stdscr):
 		commandMap = STANDARD_MAP
 
 		headline = "Find a code snippet: Choose a language/framework"
-		return simple_menu(headline, itemList, commandMap, 5, argList)
+		index, selection = simple_menu(headline, itemList, commandMap, 5, argList)
+		return index, selection, True
 
 	def testMenu(argList):
 		'''User selects what language they want to choose for new snippet'''
@@ -128,7 +129,8 @@ def run(stdscr):
 		menu = Menu(midWin, itemList, commandMap, FORMAT)
 		lang = argList[1]
 		headline = "%s Programming Snippets" % lang
-		return simple_menu(headline, itemList, commandMap, 5, argList)
+		index, selection = simple_menu(headline, itemList, commandMap, 5, argList)
+		return index, selection, True
 
 
 	########################################################
@@ -156,8 +158,7 @@ def run(stdscr):
 
 		itemList = [
 				"Create another %s snippet" % lang,
-				"Create a different snippet",
-				"Back to main menu"
+				"Create a different snippet"
 				]
 		commandMap = (
 				('j', 'scrollDown'),
@@ -170,7 +171,7 @@ def run(stdscr):
 		menu = Menu(midWin, itemList, commandMap, FORMAT)
 		headline = "%s Programming Snippets" % lang
 		index, selection = simple_menu(headline, itemList, commandMap, 3, argList)
-		return index, selection, False
+		return index, selection, None
 
 	########################################################
 	# Browsing
@@ -202,24 +203,6 @@ def run(stdscr):
 			text_editor(file_name_from_string(description))
 		topWin.clear(); midWin.clear(); botWin.clear();
 		return index, selection, None
-
-	def browseLangDisplaySnippet(argList):
-
-		''' User has chosen a snippet. Display it and ask if they want to
-		view something else'''
-		
-		lang = argList[1]
-		description = argList[2]
-
-		results = GoogleBot.get_lang(lang)
-		itemList = [x for x in results]
-
-		commandMap = STANDARD_MAP
-
-		menu = Menu(midWin, itemList, commandMap, FORMAT)
-		headline = "View more %s Programming Snippets" % lang
-		index, selection = simple_menu(headline, itemList, commandMap, 5, argList)
-		return index, selection, False
 
 	# MENU MAP
 	def get_next_menu(menu, index):
@@ -263,8 +246,6 @@ def run(stdscr):
 				nextMenu = createSnippet
 			elif index == 1 or index == -1:
 				nextMenu = createNewMenu
-			elif index == 2:
-				nextMenu = mainMenu
 			return nextMenu
 
 		def __testMenu():
@@ -287,14 +268,6 @@ def run(stdscr):
 				nextMenu = browseMenu
 			if index >= 0:
 				nextMenu = browseLangSnippets
-			return nextMenu
-
-		def __browseLangDisplaySnippet():
-			nextMenu = False
-			if index == -1:
-				nextMenu = browseMenu
-			if index >= 0:
-				nextMenu = browseLangDisplaySnippet
 			return nextMenu
 
 
