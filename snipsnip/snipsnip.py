@@ -66,8 +66,8 @@ def run(stdscr):
 		menu = Menu(midWin, itemList, commandMap, FORMAT)
 		topWin.write(headline)
 		botWin.write(menu.command_str())
-		botWin.write("\n")
-		botWin.write(str(argList))
+		botWin.write("\n\n")
+		botWin.write('[' + ' -> '.join([str(x) for x in argList]) + ']')
 		topWin.draw(); botWin.draw();
 
 
@@ -113,39 +113,54 @@ def run(stdscr):
 		index, selection = simple_menu(headline, itemList, commandMap, 5, argList)
 		return index, selection, True
 
-	def searchResults(argList):
-		'''User creats snippets and can create another or return to main menu'''
+
+	def enterQuery(argList):
+		'''User puts in his search term'''
 		lang = argList[1]
+		# Get description of snippet
+		topWin.flash("Find a %s snippet" % lang)
+		midWin.flash("Snippet query (CTRL-C to escape): ")
+		try:
+			selection = midWin.read()
+			midWin.clear(); topWin.clear();botWin.clear();
+			index = 1
+		except KeyboardInterrupt:
+			midWin.clear(); topWin.clear();botWin.clear();
+			index, selection = -1, 0
+
+		return index, selection, True
+
+	def searchResults(argList):
+		'''User gets to view search results'''
+		lang = argList[1]
+		query = argList[2]
 		
-		while True:
-			# Get description of snippet
-			topWin.flash("Find a %s snippet" % lang)
-			midWin.flash("Snippet query (CTRL-C to escape): ")
-			try:
-				query = midWin.read()
-				midWin.clear(); topWin.clear();botWin.clear();
+		# Get description of snippet
+		topWin.flash("Search results")
 
-				results = GoogleBot.search(query, lang)
-				itemList = [x[0] for x in results]
-				pathList = [x[1] for x in results]
+		results = GoogleBot.search(query, lang)
+		itemList = [x[0] for x in results]
+		pathList = [x[1] for x in results]
 
-				#itemList = CATEGORIES
-				commandMap = (
-						('j', 'scrollDown'),
-						('k', 'scrollUp'),
-						('b', 'back'),
-						('q', 'exit'),
-				)
+		#itemList = CATEGORIES
+		commandMap = (
+				('j', 'scrollDown'),
+				('k', 'scrollUp'),
+				('b', 'back'),
+				('q', 'exit'),
+		)
 
-				menu = Menu(midWin, itemList, commandMap, FORMAT)
-				headline = "Search Results: %s" % query
+		menu = Menu(midWin, itemList, commandMap, FORMAT)
+		headline = "Search Results: %s" % query
 
-				index, selection = simple_menu(headline, itemList, commandMap, 3, argList)
-				text_editor(file_name_from_string(selection + lang))
-				midWin.clear(); topWin.clear();botWin.clear();
-			except KeyboardInterrupt:
-				midWin.clear(); topWin.clear();botWin.clear();
-				return -1, 0, None
+		index, selection = simple_menu(headline, itemList, commandMap, 3, argList)
+
+		# If user exits, don't attempt to get selected item (since it wasn't selected)
+		if index != -1:
+			text_editor(file_name_from_string(selection + lang))
+		midWin.clear(); topWin.clear();botWin.clear();
+
+		return index, selection, None
 
 	########################################################
 	# Creating 
@@ -227,15 +242,18 @@ def run(stdscr):
 				exit(0)
 			return nextMenu
 
+		#######################################
+		# Find
+		#######################################
 		def __findMenu():
 			nextMenu = False
 			if index == -1:
 				nextMenu = mainMenu
 			elif index >= 0:
-				nextMenu = searchResults
+				nextMenu = enterQuery
 			return nextMenu
 
-		def __searchResults():
+		def __enterQuery():
 			nextMenu = False
 			if index == -1:
 				nextMenu = findMenu
@@ -243,12 +261,23 @@ def run(stdscr):
 				nextMenu = searchResults
 			return nextMenu
 
+		def __searchResults():
+			nextMenu = False
+			if index == -1:
+				nextMenu = enterQuery
+			elif index >= 0:
+				nextMenu = searchResults
+			return nextMenu
+
+		#######################################
+		# Create
+		#######################################
 		def __createNewMenu():
 			nextMenu = False
 			if index == -1:
 				nextMenu = mainMenu
 			elif index >= 0:
-				nextMenu = createSnippet
+				nextMenu = enterQuery
 			return nextMenu
 
 		def __createSnippet():
@@ -259,6 +288,10 @@ def run(stdscr):
 				nextMenu = createNewMenu
 			return nextMenu
 
+
+		#######################################
+		# Browse
+		#######################################
 		def __browseMenu():
 			nextMenu = False
 			if index == -1:
