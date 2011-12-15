@@ -1,2 +1,5 @@
 snipsnip/indexdir/*
 snipsnip/snippets/*
+build/*
+dist/*
+*egg-info/*
