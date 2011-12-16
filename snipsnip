@@ -168,7 +168,7 @@ def run(stdscr):
 		botWin.write("\n\n")
 
 		# Write the breadcrumb navigation to the bottom screen
-		botWin.write('[' + ' -> '.join([str(x) for x in argList]) + ']')
+		botWin.write(breadcrumb_nav(argList))
 
 		# Now display what we've written.
 		topWin.draw(); botWin.draw();
@@ -181,7 +181,6 @@ def run(stdscr):
 		topWin.clear(); midWin.clear(); botWin.clear();
 
 		return (index, selection)
-
 
 	########################################################
 	# Main Menu

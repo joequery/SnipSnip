@@ -261,3 +261,13 @@ def start_menu_cycle(menu, menuCycler):
 
 		keeplooping = keeplooping and not i is False
 
+def breadcrumb_nav(argList):
+	'''
+	Return a string representing a breadcrumb navigation to let the
+	user know where they are in the application. Should be used
+	within a menu function.
+	'''
+	if len(argList) > 0:
+		return '[' + ' -> '.join([str(x) for x in argList]) + ']'
+	else:
+		return ''
