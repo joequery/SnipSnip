@@ -284,7 +284,7 @@ def run(stdscr):
 		
 		def get_description():
 			botWin.write("\n\n")
-			botWin.write('[' + ' -> '.join([str(x) for x in argList]) + ']')
+			botWin.write(breadcrumb_nav(argList))
 			topWin.draw(); botWin.draw(); midWin.draw();
 			try:
 				description = midWin.read()
