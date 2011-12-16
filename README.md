@@ -18,7 +18,7 @@ SnipSnip aims to achieve the following:
 ## Installation
     git clone git://github.com/joequery/SnipSnip.git
     cd SnipSnip
-    sudo setup.py install
+    sudo python setup.py install
 
 This installs the snipsnip script and creates a ~/.snipsnip directory. 
 Since SnipSnip will need to create an index, the ~/.snipsnip directory will
