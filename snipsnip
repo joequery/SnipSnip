@@ -5,6 +5,7 @@ import curses, os, math, tempfile
 from snip.menu import *
 from snip.curseshelpers import *
 from snip.search import GoogleBot
+from snip.globals import *
 
 def run(stdscr):
 
@@ -36,8 +37,14 @@ def run(stdscr):
 	#topWin.test(); midWin.test(); botWin.test();
 
 	# We'll get this from a file later.
-	CATEGORIES = [x.strip() for x in open(LANG_FILE).readlines()]
-	CATEGORIES = sorted(CATEGORIES, key = str.lower)
+	# Global variables hack. Needed to update language file but only as 
+	# needed. Nested functions can't alter a global variable, and we need
+	# the functions nested in order to use the curses wrapper (necessary to
+	# avoid genuinely screwing up the user's screen
+	class g:
+		CATEGORIES = quick_read(LANG_FILE)
+		
+	#g.CATEGORIES = sorted(g.CATEGORIES, key = str.lower)
 
 	# This is the standard command mapping that will be used on almost
 	# all the menus. Needs to be a tuple of tuples in order to preserve
@@ -192,6 +199,7 @@ def run(stdscr):
 				"Create a new snippet",
 				"Find a snippet",
 				"Browse snippets",
+				"Manage languages",
 				"Exit"
 				]
 		commandMap = (
@@ -201,7 +209,7 @@ def run(stdscr):
 		)
 
 		headline = "Main Menu"
-		index, selection = simple_menu(headline, itemList, commandMap, 4, argList)
+		index, selection = simple_menu(headline, itemList, commandMap, 5, argList)
 		return index, selection, True
 
 	########################################################
@@ -209,7 +217,7 @@ def run(stdscr):
 	########################################################
 	def findMenu(argList):
 		'''User selects what language they want to choose for finding snippet'''
-		itemList = CATEGORIES
+		itemList = g.CATEGORIES
 		commandMap = STANDARD_MAP
 
 		headline = "Find a code snippet: Choose a language/framework"
@@ -245,7 +253,6 @@ def run(stdscr):
 		itemList = [x[0] for x in results]
 		pathList = [x[1] for x in results]
 
-		#itemList = CATEGORIES
 		commandMap = (
 				('j', 'scrollDown'),
 				('k', 'scrollUp'),
@@ -272,7 +279,7 @@ def run(stdscr):
 	########################################################
 	def createNewMenu(argList):
 		'''User selects what language they want to choose for new snippet'''
-		itemList = CATEGORIES
+		itemList = g.CATEGORIES
 		commandMap = STANDARD_MAP
 
 		headline = "Create New Snippet: Choose a language/framework"
@@ -318,7 +325,7 @@ def run(stdscr):
 	########################################################
 	def browseMenu(argList):
 		''' User selets what language to browse code snippets'''
-		itemList = CATEGORIES
+		itemList = g.CATEGORIES
 		commandMap = STANDARD_MAP
 
 		headline = "Browse snippets"
@@ -346,6 +353,60 @@ def run(stdscr):
 		topWin.clear(); midWin.clear(); botWin.clear();
 		return index, selection, None
 
+	########################################################
+	# Manage languages
+	########################################################
+	def manageLanguages(argList):
+		''' Add, Delete, Rename programming languages/frameworks '''
+
+		itemList = [
+				"Add language"
+				]
+		commandMap = STANDARD_MAP
+
+		headline = "Manage Languages/frameworks"
+		index, selection = simple_menu(headline, itemList, commandMap, 3, argList)
+		return index, selection, True
+
+	def addNewLanguage(argList):
+		'''User creats snippets and can create another or return to main menu'''
+		
+		def get_language():
+			botWin.write("\n\n")
+			botWin.write(breadcrumb_nav(argList))
+			topWin.draw(); botWin.draw(); midWin.draw();
+			try:
+				lang = midWin.read()
+				try:
+					f = open(LANG_FILE, 'a')
+					f.write(lang.strip() + '\n')
+					f.close()
+				except:
+					raise
+				midWin.clear(); topWin.clear();botWin.clear();
+
+			except KeyboardInterrupt:
+				midWin.clear(); topWin.clear();botWin.clear();
+				curses.curs_set(0)  # Hide cursor
+				curses.noecho()
+				lang = False
+			return lang
+
+		topWin.write("New Programming Language")
+		midWin.write("Language name (CTRL-C to escape): ")
+		lang = get_language()
+		while lang:
+			topWin.clear(); midWin.clear(); botWin.clear();
+
+			# Get description of snippet
+			g.CATEGORIES = quick_read(LANG_FILE)
+			topWin.write("'%s' language created.\n" % lang)
+			topWin.write("Create another language")
+			midWin.write("Language name (CTRL-C to escape): ")
+			lang = get_language()
+
+		return -1, 0, None
+
 	# MENU MAP
 	def get_next_menu(menu, index):
 		''' Determines where to go after leaving a menu.
@@ -363,6 +424,8 @@ def run(stdscr):
 			elif index == 2:
 				nextMenu = browseMenu
 			elif index == 3:
+				nextMenu = manageLanguages
+			elif index == 4:
 				exit(0)
 			return nextMenu
 
@@ -430,6 +493,23 @@ def run(stdscr):
 				nextMenu = browseMenu
 			if index >= 0:
 				nextMenu = browseLangSnippets
+			return nextMenu
+
+		#######################################
+		# Manage Languages
+		#######################################
+		def __manageLanguages():
+			nextMenu = False
+			if index == -1:
+				nextMenu = mainMenu
+			elif index == 0:
+				nextMenu = addNewLanguage
+			return nextMenu
+
+		def __addNewLanguage():
+			nextMenu = False
+			if index == -1:
+				nextMenu = manageLanguages
 			return nextMenu
 
 		# Execute the menu filter function

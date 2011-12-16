@@ -114,3 +114,9 @@ def text_editor(fileName):
 	#with tempfile.NamedTemporaryFile(suffix=".tmp") as tmpfile:
 	subprocess.call([EDITOR, f.name])
 	f.close()
+
+def quick_read(fileName):
+	f = open(fileName, 'r')
+	items = [x.strip() for x in f.readlines()]
+	f.close()
+	return items
