@@ -13,31 +13,35 @@ def run(stdscr):
 	########################################################
 	curses.curs_set(0)  # Hide cursor
 	
-	# Plain: Green text on black background
-	curses.init_pair(1, curses.COLOR_GREEN, curses.COLOR_BLACK)
-
-	# Highlight: Black text on green background
-	curses.init_pair(2, curses.COLOR_BLACK ,curses.COLOR_GREEN)
-
-	# Store format in a dict for convenience and readability
+	# Store format in a dict for convenience and readability. 
+	# Think of it like a c-style enum.
 	FORMAT = {
 		"plain": 1,
 		"highlight": 2
 	}
+	curses.init_pair(1, curses.COLOR_GREEN, curses.COLOR_BLACK)
+	curses.init_pair(2, curses.COLOR_BLACK ,curses.COLOR_GREEN)
 
-	# Create a template for the windows
+	# Create a template for the windows. We'll assume the standard
+	# width of 80 columns and we'll align everything to the left.
 	t = WindowTemplate(width=80, left=0)
 
 	# Create the individual windows
 	topWin = Window(t, top=0, height=3)
 	midWin = Window(t, top=3, height=11)
 	botWin = Window(t, top=14, height=5)
+
+	# Uncomment to see borders around the windows for positioning 
+	# reference.
 	#topWin.test(); midWin.test(); botWin.test();
 
 	# We'll get this from a file later.
 	CATEGORIES = [x.strip() for x in open(LANG_FILE).readlines()]
 	CATEGORIES = sorted(CATEGORIES, key = str.lower)
 
+	# This is the standard command mapping that will be used on almost
+	# all the menus. Needs to be a tuple of tuples in order to preserve
+	# order during iteration.
 	STANDARD_MAP = (
 			('j', 'scrollDown'),
 			('k', 'scrollUp'),
@@ -45,19 +49,132 @@ def run(stdscr):
 			('N', 'prevPage'),
 			('b', 'back')
 		)
+
+	'''
+	=========================== MENU FUNCTIONS =========================== 
+		We now define a group of functions we'll call menu functions. These menu
+	functions essentially define the type of selections the user will be able
+	to make. Below these menu function definitions is a menu mapping function 
+	called	get_next_menu which dictates which menu the user will be 
+	redirected to after	making a selection from the current menu. 
+		It's important to note that not all 'menus' will actually be the 
+	standard menu where you are given a list of items to select from. Some
+	menus may simply display information or may request user input, and would
+	be better defined as 'screens'. In fact, it may actually be worthwhile to
+	rename 'menu' to 'screen' throughout the codebase to avoid this confusion
+	since all menus are screens but not all screens are menus. 
+
+	Each menu function should have a parameter of argList (explained below)
+	and return a 3-tuple of (index, selection, pushPop)
+
+	index: index serves two roles. On the surface, index is just the index
+	of the selected item from an itemList. However, since almost all programs
+	need to establish a 'terminating menu' where the user can only stay in 
+	the current window or go back to previous ones, we use the index as a form
+	of navigation as well. Throughout the program, a returned index of -1 
+	indicates	that the user should be redirected back to the previous menu.
+	Consider a simple phonebook application. Eventually the user will need to
+	input data for a new telephone entry. Clearly no selection from a menu is
+	being made at the moment they put in an entry, but to keep consistent 
+	with our get_next_menu mapping, we need	to return SOME index. In some
+	instances, -2 is used to indicate a forced exit.
+
+	selection: In the event of a standard menu, selection should return the
+	string value of the selection. In the event of a non-standard menu (such
+	as a screen for user input or information display), the selection value is
+	irrelevant and any arbitrary value will work.
+
+	pushPop: Probably the most complicated of the tuple is the pushPop return 
+	value. pushPop can be one of three values: False, None, and True. 
+	Each menu function will be passed an argument list named argList. 
+	The pushPop value determines how to manipulate the argList list before
+	we go to the next menu.
+
+		If pushPop is:
+		True: Append the current menu's returned selection value to the argList
+		so the next menu will have access to the value.
+
+		False: Pop the last argList value, removing the previous menus' value in
+		the argList (if any was provided)
+
+		None: Pass the argList as is to the next menu function.
+
+	As an example, consider an application that stores the users physical
+	address and contains the following menus:
+		stateMenu,
+		cityMenu,
+		getStreetAddressInput
+		confirmAndSave
+
+	From stateMenu, the user selects the state they live in. This data will
+	be needed by cityMenu to build a list of possible cities, so pushPop for
+	stateMenu should be True so the selected state value is appended to the 
+	argList and is this made available to the cityMenu.
+
+	Since the users city will be stored, we need to add the selected city
+	to the argList so we'll have access to it in the confirmAndSave screen.
+	Thus, the cityMenu pushPop value should be True. This scenario is 
+	exactly the same for getStreetAddressInput and should also return a 
+	pushPop value of True.
+
+	Finally, the confirmAndSave menu allows the user to save the data. Since
+	this is a 'terminating menu' (there are no more menus 'after' this), we 
+	don't need to append the selection of value (something like "Yes, I 
+	confirm this data is correct") to the argList. This the pushPop value of 
+	confirmAndSave is None.
+
+	Whenever possible, use the simple_menu function defined below for 
+	standard menus.
+	'''
+
 	def simple_menu(headline, itemList, commandMap, itemsPerPage, argList):
-		'''Create a simple menu that has a headline, menu, and command
-		display. This is specific to this program to avoid repitition
+		'''
+		Create a simple menu that has a headline, menu, command
+		display, and breadcrumb navigation. This is specific to this program 
+		to help avoid repitition, and should only be used inside menu functions.
+
+		headline: Headline that will be displayed in the top window.
+		itemList: List of items to be displayed in the middle window
+		commandMap: Command mapping to be displayed in the bottom window
+		itemsPerPage: How many items of the menu will be displayed at once
+		argList: Argument list of the current menu.
+
+		Example usage:
+
+		itemList = [
+				"Item0",
+				"Item1",
+				"Item2",
+				"Item3",
+				]
+		commandMap = (
+			('j', 'scrollDown'),
+			('k', 'scrollUp'),
+			('q', 'exit')
+		)
+
+		headline = "Main Menu"
+		index, selection = simple_menu(headline, itemList, commandMap, 4, argList)
 		'''
 
+		# Get the menu object
 		menu = Menu(midWin, itemList, commandMap, FORMAT)
+
+		# Write the headline to the top screen
 		topWin.write(headline)
+
+		# Write the command mapping to the bottom screen
 		botWin.write(menu.command_str())
 		botWin.write("\n\n")
+
+		# Write the breadcrumb navigation to the bottom screen
 		botWin.write('[' + ' -> '.join([str(x) for x in argList]) + ']')
+
+		# Now display what we've written.
 		topWin.draw(); botWin.draw();
 
-
+		# Display menu in the middle window and return users selection
+		# and the index of the selection.
 		index, selection = menu.activate(itemsPerPage, (1,1))
 
 		# Clear all the windows before we exit
