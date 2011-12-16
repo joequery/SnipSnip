@@ -20,6 +20,12 @@ SnipSnip aims to achieve the following:
     cd SnipSnip
     sudo setup.py install
 
+This installs the snipsnip script and creates a ~/.snipsnip directory. 
+Since SnipSnip will need to create an index, the ~/.snipsnip directory will
+need appropriate permissions.
+
+    sudo chmod -R 777 ~/.snipsnip
+
 ## Usage
 run `snipsnip` from the terminal. Before you can create a code snippet, you
 need to create programming language/frameworks categories by going to

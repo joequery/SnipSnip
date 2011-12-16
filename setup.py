@@ -14,7 +14,12 @@ setup(name='SnipSnip',
 
 # See if the snippet directories already exist.
 if not os.path.exists(SNIP_DIR):
+	# create the necessary files
 	os.makedirs(SNIP_DIR)
 	os.makedirs(SNIPPETS_DIR)
 	os.makedirs(WHOOSH_INDEX)
+	f = open(LANG_FILE, 'w')
+	f.close()
+
+	# Now give the necessary permissions
 	print "Index created in %s" % SNIP_DIR
