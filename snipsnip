@@ -223,6 +223,7 @@ def run(stdscr):
 		# Get description of snippet
 		topWin.flash("Find a %s snippet" % lang)
 		midWin.flash("Snippet query (CTRL-C to escape): ")
+		botWin.flash(breadcrumb_nav(argList))
 		try:
 			selection = midWin.read()
 			midWin.clear(); topWin.clear();botWin.clear();
