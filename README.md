@@ -16,8 +16,8 @@ SnipSnip aims to achieve the following:
 * *NIX/OS X operating system
 
 ## Installation
-		git clone git://github.com/joequery/SnipSnip.git
-		cd SnipSnip
+    git clone git://github.com/joequery/SnipSnip.git
+    cd SnipSnip
     sudo setup.py install
 
 ## Usage
@@ -25,4 +25,4 @@ run `snipsnip` from the terminal. Before you can create a code snippet, you
 need to create programming language/frameworks categories by going to
 `Manage languages -> Add language`. After you have created your categories,
 you can begin creating and searching for code snippets. A more detailed 
-how-to guide is in progress.
+how-to guide is in the works!
