@@ -329,6 +329,10 @@ def run(stdscr):
 		commandMap = STANDARD_MAP
 
 		headline = "Browse snippets"
+		if len(itemList) == 0:
+			notFoundStr = 'No programming languages found! Visit '
+			notFoundStr += '"Manage languages" \nfrom the main menu.'
+			midWin.flash("\n" + notFoundStr)
 		index, selection = simple_menu(headline, itemList, commandMap, 9, argList)
 		return index, selection, True
 
