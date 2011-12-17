@@ -7,7 +7,7 @@ setup(name='SnipSnip',
       description='Local Code Snippet Database',
       author='Joseph McCullough',
       author_email='joseph@vertstudios.com',
-	  install_requires=['whoosh'],
+	  install_requires=['whoosh', 'inflect'],
 	  packages = ['snip'],
       scripts=['snipsnip']
      )
