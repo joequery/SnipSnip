@@ -117,6 +117,6 @@ def text_editor(fileName):
 
 def quick_read(fileName):
 	f = open(fileName, 'r')
-	items = [x.strip() for x in f.readlines()]
+	items = sorted([x.strip() for x in f.readlines()], key=str.lower)
 	f.close()
 	return items
