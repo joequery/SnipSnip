@@ -2,6 +2,7 @@ from whoosh.index import create_in, open_dir, EmptyIndexError
 from whoosh.fields import *
 from whoosh.qparser import QueryParser, OrGroup
 from whoosh.analysis import RegexTokenizer, LowercaseFilter, StandardAnalyzer
+import inflect
 from globals import *
 ana = StandardAnalyzer(
     expression=re.compile(r"[\w\-+]+(\.?[\w\-]+)*", re.UNICODE),
@@ -37,9 +38,14 @@ class Searcher:
 		'''
 
 		self.get_writer()
+
+		# To prevent a pluralization from causing the searches to fail,
+		# store the singular version of the description string for indexing
+		# and the raw sting for presentation.
 		fileName = file_name_from_string(description+lang)
 		self.writer.add_document(
-				description = unicode(description),
+				description = unicode(self.singularize(description)),
+				_stored_description = unicode(description),
 				path = unicode(fileName),
 				lang = unicode(lang)
 		)
@@ -55,7 +61,10 @@ class Searcher:
 		with self.ix.searcher() as searcher:
 			#qp = QueryParser("description", self.ix.schema, group=OrGroup)
 			qp = QueryParser("description", self.ix.schema)
-			query = qp.parse(unicode("(%s) AND (lang:%s)" % (searchStr, lang)))
+
+			# Since the index is singularized, we must search using a
+			# singularized string.
+			query = qp.parse(unicode("(%s) AND (lang:%s)" % (self.singularize(searchStr), lang)))
 			results = searcher.search(query)
 			returnThis = [ [x['description'], x['path']] for x in results]
 			return returnThis
@@ -77,6 +86,23 @@ class Searcher:
 		'''
 		fileName = file_name_from_string(description)
 		text_editor(fileName)
+
+	def singularize(self, theStr):
+		'''
+		Return a singularized string. For example,
+		"Rails routes variables" => "Rail route variable"
+		'''
+		p = inflect.engine()
+		normalList = [x for x in theStr.split(' ')]
+		singularList = [p.singular_noun(x) for x in normalList]
+
+		# p.sinuglar_noun returns False if the word is already singular,
+		# so just grab the word from normalList.
+		returnList = [x or y for (x,y) in zip(singularList, normalList)]
+
+		# Now join back into a string
+		return " ".join(returnList)
+
 
 GoogleBot = Searcher(WHOOSH_INDEX)
 #result = GoogleBot.search("Hello World", "c++")
