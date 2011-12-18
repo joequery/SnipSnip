@@ -105,6 +105,12 @@ def snippet_file_name(description):
 	# Join with underscores and make lowercase.
 	return joinChar.join([description, str( int(time.time()) )])
 
+def lang_dir(lang):
+	'''
+	Get a string representing the directory of the language
+	'''
+	return os.path.join(SNIPPETS_DIR, lang.lower().strip())
+
 	
 
 def text_editor(fileName):

@@ -378,20 +378,31 @@ def run(stdscr):
 		return index, selection, True
 
 	def addNewLanguage(argList):
-		'''User creats snippets and can create another or return to main menu'''
+		'''User creates programming languages for categorization of 
+		their snippets'''
 		
 		def get_language():
 			botWin.write("\n\n")
 			botWin.write(breadcrumb_nav(argList))
 			topWin.draw(); botWin.draw(); midWin.draw();
 			try:
-				lang = midWin.read()
+				lang = midWin.read().strip()
 				try:
 					f = open(LANG_FILE, 'a')
-					f.write(lang.strip() + '\n')
+					f.write(lang + '\n')
 					f.close()
+
+					# Make the directory for the language if
+					# it doesn't already exist.
+					langDir = lang_dir(lang)
+					if not os.path.isdir(langDir):
+						os.mkdir(langDir)
+
+
+
 				except:
 					raise
+
 				midWin.clear(); topWin.clear();botWin.clear();
 
 			except KeyboardInterrupt:

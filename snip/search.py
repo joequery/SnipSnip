@@ -42,7 +42,9 @@ class Searcher:
 		# To prevent a pluralization from causing the searches to fail,
 		# store the singular version of the description string for indexing
 		# and the raw sting for presentation.
-		fileName = snippet_file_name(description)
+
+		# Filename looks like so: ~/.snipsnip/python/how_to_use_lists_12342342
+		fileName = os.path.join(lang_dir(lang), snippet_file_name(description))
 		self.writer.add_document(
 				description = unicode(self.singularize(description)),
 				_stored_description = unicode(description),
