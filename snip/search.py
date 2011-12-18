@@ -61,8 +61,7 @@ class Searcher:
 		s.search("How to append to a list", "Python")
 		'''
 		with self.ix.searcher() as searcher:
-			#qp = QueryParser("description", self.ix.schema, group=OrGroup)
-			qp = QueryParser("description", self.ix.schema)
+			qp = QueryParser("description", self.ix.schema, group=OrGroup)
 
 			# Since the index is singularized, we must search using a
 			# singularized string.
