@@ -268,8 +268,10 @@ def run(stdscr):
 		index, selection = simple_menu(headline, itemList, commandMap, 9, argList)
 
 		# If user exits, don't attempt to get selected item (since it wasn't selected)
+		# If user doesn't exit, get the path corresponding to the selection and open
+		# it in the default text editor.
 		if index != -1 and selection is not False:
-			text_editor(file_name_from_string(selection + lang))
+			text_editor(pathList[index])
 		midWin.clear(); topWin.clear();botWin.clear();
 
 		return index, selection, None
@@ -340,7 +342,8 @@ def run(stdscr):
 		''' User has chosen a language, now show snippets for that language'''
 		lang = argList[1]
 		results = GoogleBot.get_lang(lang)
-		itemList = [x for x in results]
+		itemList = [x[0] for x in results]
+		pathList = [x[1] for x in results]
 
 		commandMap = STANDARD_MAP
 
@@ -351,9 +354,11 @@ def run(stdscr):
 		index, selection = simple_menu(headline, itemList, commandMap, 9, argList)
 
 		# If user exits, don't attempt to get selected item (since it wasn't selected)
-		if index != -1:
+		# If user doesn't exit, get the path corresponding to the selection and open
+		# it in the default text editor.
+		if index != -1 and selection is not False:
 			description = selection
-			text_editor(file_name_from_string(description + lang))
+			text_editor(pathList[index])
 		topWin.clear(); midWin.clear(); botWin.clear();
 		return index, selection, None
 

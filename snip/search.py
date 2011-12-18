@@ -42,7 +42,7 @@ class Searcher:
 		# To prevent a pluralization from causing the searches to fail,
 		# store the singular version of the description string for indexing
 		# and the raw sting for presentation.
-		fileName = file_name_from_string(description+lang)
+		fileName = snippet_file_name(description)
 		self.writer.add_document(
 				description = unicode(self.singularize(description)),
 				_stored_description = unicode(description),
@@ -77,16 +77,9 @@ class Searcher:
 			qp = QueryParser("lang", self.ix.schema)
 			query = qp.parse(unicode(lang))
 			results = searcher.search(query, sortedby="description", reverse=True)
-			returnThis = [x['description'] for x in results]
+			returnThis = [ [x['description'], x['path']] for x in results]
 			return returnThis
 	
-	def open_snippet(self, description):
-		'''
-		Open the snippet from the description in the text editor
-		'''
-		fileName = file_name_from_string(description)
-		text_editor(fileName)
-
 	def singularize(self, theStr):
 		'''
 		Return a singularized string. For example,

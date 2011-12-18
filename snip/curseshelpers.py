@@ -1,5 +1,5 @@
 # Curses wrappers and helpers!
-import curses, os, base64, subprocess, tempfile, sys
+import curses, os, re, subprocess, tempfile, sys, time
 from globals import *
 
 class WindowTemplate:
@@ -84,11 +84,28 @@ class Window:
 		curses.curs_set(0)  
 		return text
 
-def file_name_from_string(theStr):
-	return base64.urlsafe_b64encode(theStr)
+def file_name_safe(theStr, joinChar='_'):
+	'''
+	Return a file name safe string. Extracts groups of numbers
+	and letters from the string and joins with joinChar. Also
+	lower cases the string.
+	'''
+	tmpList = re.findall(r'[a-zA-Z0-9]+', theStr)
+	return joinChar.join([x.lower() for x in tmpList])
 
-def string_from_file_name(fileName):
-	return base64.urlsafe_b64decode(fileName)
+
+def snippet_file_name(description):
+	'''
+	Get a file safe name for the description with a timestamp 
+	attached to avoid collisions.
+	'''
+	joinChar = '_'
+	description = file_name_safe(description, joinChar)
+
+	# Join with underscores and make lowercase.
+	return joinChar.join([description, str( int(time.time()) )])
+
+	
 
 def text_editor(fileName):
 	'''
