@@ -43,14 +43,19 @@ class Searcher:
 		# store the singular version of the description string for indexing
 		# and the raw sting for presentation.
 
-		# Filename looks like so: ~/.snipsnip/python/how_to_use_lists_12342342
-		fileName = os.path.join(lang_dir(lang), snippet_file_name(description))
+		# pathName looks like so: python/how_to_use_lists_12342342
+		# fileName is the absolute path to the pathName on the system.
+		pathName = os.path.join(lang_dir(lang, False), 
+				snippet_file_name(description))
+
 		self.writer.add_document(
 				description = unicode(self.singularize(description)),
 				_stored_description = unicode(description),
-				path = unicode(fileName),
+				path = unicode(pathName),
 				lang = unicode(lang)
 		)
+
+		fileName = os.path.join(lang_dir(lang), snippet_file_name(description))
 		text_editor(fileName)
 		self.writer.commit()
 	

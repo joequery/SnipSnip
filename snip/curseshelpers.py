@@ -105,11 +105,15 @@ def snippet_file_name(description):
 	# Join with underscores and make lowercase.
 	return joinChar.join([description, str( int(time.time()) )])
 
-def lang_dir(lang):
+def lang_dir(lang, full=True):
 	'''
 	Get a string representing the directory of the language
+	full: If full is True, get the absolute path to the file.
 	'''
-	return os.path.join(SNIPPETS_DIR, lang.lower().strip())
+	if full:
+		return os.path.join(SNIPPETS_DIR, lang.lower().strip())
+	else:
+		return lang.lower().strip()
 
 	
 
