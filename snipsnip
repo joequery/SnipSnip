@@ -52,8 +52,8 @@ def run(stdscr):
 	STANDARD_MAP = (
 			('j', 'scrollDown'),
 			('k', 'scrollUp'),
-			('n', 'nextPage'),
-			('N', 'prevPage'),
+			('l', 'nextPage'),
+			('h', 'prevPage'),
 			('b', 'back')
 		)
 
