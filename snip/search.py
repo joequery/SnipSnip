@@ -49,7 +49,7 @@ class Searcher:
 				snippet_file_name(description))
 
 		self.writer.add_document(
-				description = unicode(self.singularize(description)),
+				description = unicode(self.singularize(description).lower()),
 				_stored_description = unicode(description),
 				path = unicode(pathName),
 				lang = unicode(lang)
@@ -72,7 +72,7 @@ class Searcher:
 			# singularized string.
 			query = qp.parse(unicode("(%s) AND (lang:%s)" % (self.singularize(searchStr), lang)))
 			results = searcher.search(query)
-			returnThis = [ (x['description'], x['path']) for x in results]
+			returnThis = [ (x['description'].lower(), x['path']) for x in results]
 			return returnThis
 
 	def get_lang(self, lang):
@@ -83,7 +83,7 @@ class Searcher:
 			qp = QueryParser("lang", self.ix.schema)
 			query = qp.parse(unicode(lang))
 			results = searcher.search(query, sortedby="description")
-			returnThis = [ (x['description'], x['path']) for x in results]
+			returnThis = [ (x['description'].lower(), x['path']) for x in results]
 
 			# Sort by alphabet, case insensitive
 			returnThis.sort(key=lambda x:x[0].lower())
