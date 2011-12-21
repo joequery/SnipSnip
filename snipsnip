@@ -342,6 +342,9 @@ def run(stdscr):
 		''' User has chosen a language, now show snippets for that language'''
 		lang = argList[1]
 		results = GoogleBot.get_lang(lang)
+		
+		# Sort by first item, which is the description.
+		results.sort(key=lambda x:x[0].lower())
 		itemList = [x[0] for x in results]
 		pathList = [x[1] for x in results]
 
