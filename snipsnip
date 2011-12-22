@@ -4,7 +4,7 @@
 import curses, os, math, tempfile
 from snip.menu import *
 from snip.curseshelpers import *
-from snip.search import GoogleBot
+from snip.search import *
 from snip.globals import *
 
 def run(stdscr):
