@@ -59,6 +59,34 @@ class Searcher:
 		text_editor(fileName)
 		self.writer.commit()
 	
+	def delete(self, snipTuple):
+		'''
+		Delete a snippet from the index and the file system.
+		snipTuple is in the form of (description, path). 
+		Ex: (u'hello, world!', u'bash/hello_world_23049283042')
+		'''
+		
+		path = snipTuple[1]
+		lang = path.split('/')[0]
+		snippet = path.split('/')[1]
+		self.get_writer()
+
+		# Delete based on the path, since it is unique.
+		self.writer.delete_by_term('path', path)
+		self.writer.commit()
+
+		# Now that we've deleted the snippet from the index, we delete
+		# it from the file system.
+
+		# Get the full path of the snippet file.
+		snipDir = os.path.join(lang_dir(lang), snippet)
+
+		# Now we delete it! We're done!
+		os.remove(snipDir)
+
+
+
+	
 	def search(self, searchStr, lang):
 		''' Search for a code snippet based off a search string (searchStr)
 		and the language
