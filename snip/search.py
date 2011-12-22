@@ -106,6 +106,48 @@ class Searcher:
 		return " ".join(returnList)
 
 
+########################################################
+# Whoosh helper functions
+########################################################
+
+def file_name_safe(theStr, joinChar='_'):
+	'''
+	Return a file name safe string. Extracts groups of numbers
+	and letters from the string and joins with joinChar. Also
+	lower cases the string.
+	'''
+	tmpList = re.findall(r'[a-zA-Z0-9]+', theStr)
+	return joinChar.join([x.lower() for x in tmpList])
+
+
+def snippet_file_name(description):
+	'''
+	Get a file safe name for the description with a timestamp 
+	attached to avoid collisions.
+	'''
+	joinChar = '_'
+	description = file_name_safe(description, joinChar)
+
+	# Join with underscores and make lowercase.
+	return joinChar.join([description, str( int(time.time()) )])
+
+def lang_dir(lang, full=True):
+	'''
+	Get a string representing the directory of the language
+	full: If full is True, get the absolute path to the file.
+	'''
+	if full:
+		return os.path.join(SNIPPETS_DIR, lang.lower().strip())
+	else:
+		return lang.lower().strip()
+
+
+def quick_read(fileName):
+	f = open(fileName, 'r')
+	items = sorted([x.strip() for x in f.readlines()], key=str.lower)
+	f.close()
+	return items
+
 GoogleBot = Searcher(WHOOSH_INDEX)
 #result = GoogleBot.search("Hello World", "c++")
 #print result[0]
