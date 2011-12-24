@@ -187,7 +187,7 @@ def run(stdscr):
 		# Clear all the windows before we exit
 		topWin.clear(); midWin.clear(); botWin.clear();
 
-		return (index, selection)
+		return index, selection, True
 
 	########################################################
 	# Main Menu
@@ -209,8 +209,7 @@ def run(stdscr):
 		)
 
 		headline = "Main Menu"
-		index, selection = simple_menu(headline, itemList, commandMap, 5, argList)
-		return index, selection, True
+		return simple_menu(headline, itemList, commandMap, 5, argList)
 
 	########################################################
 	# Searching
@@ -221,8 +220,7 @@ def run(stdscr):
 		commandMap = STANDARD_MAP
 
 		headline = "Find a code snippet: Choose a language/framework"
-		index, selection = simple_menu(headline, itemList, commandMap, 9, argList)
-		return index, selection, True
+		return simple_menu(headline, itemList, commandMap, 9, argList)
 
 
 	def enterQuery(argList):
@@ -285,8 +283,7 @@ def run(stdscr):
 		commandMap = STANDARD_MAP
 
 		headline = "Create New Snippet: Choose a language/framework"
-		index, selection = simple_menu(headline, itemList, commandMap, 9, argList)
-		return index, selection, True
+		return simple_menu(headline, itemList, commandMap, 9, argList)
 
 	def createSnippet(argList):
 		'''User creats snippets and can create another or return to main menu'''
@@ -335,8 +332,7 @@ def run(stdscr):
 			notFoundStr = 'No programming languages found! Visit '
 			notFoundStr += '"Manage languages" \nfrom the main menu.'
 			midWin.flash("\n" + notFoundStr)
-		index, selection = simple_menu(headline, itemList, commandMap, 9, argList)
-		return index, selection, True
+		return simple_menu(headline, itemList, commandMap, 9, argList)
 
 	def browseLangSnippets(argList):
 		''' User has chosen a language, now show snippets for that language'''
@@ -377,8 +373,7 @@ def run(stdscr):
 		commandMap = STANDARD_MAP
 
 		headline = "Manage Languages/frameworks"
-		index, selection = simple_menu(headline, itemList, commandMap, 3, argList)
-		return index, selection, True
+		return simple_menu(headline, itemList, commandMap, 3, argList)
 
 	def addNewLanguage(argList):
 		'''User creates programming languages for categorization of 
