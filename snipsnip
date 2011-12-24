@@ -263,7 +263,7 @@ def run(stdscr):
 
 		if len(itemList) == 0:
 			midWin.flash("\nThere were no results for '%s'" % query)
-		index, selection = simple_menu(headline, itemList, commandMap, 9, argList)
+		index, selection, pushPop = simple_menu(headline, itemList, commandMap, 9, argList)
 
 		# If user exits, don't attempt to get selected item (since it wasn't selected)
 		# If user doesn't exit, get the path corresponding to the selection and open
@@ -350,7 +350,7 @@ def run(stdscr):
 		if len(itemList) == 0:
 			midWin.flash("\nThere are no %s snippets yet." % lang)
 		headline = "%s Programming Snippets" % lang
-		index, selection = simple_menu(headline, itemList, commandMap, 9, argList)
+		index, selection, pushPop = simple_menu(headline, itemList, commandMap, 9, argList)
 
 		# If user exits, don't attempt to get selected item (since it wasn't selected)
 		# If user doesn't exit, get the path corresponding to the selection and open
