@@ -155,9 +155,9 @@ def run(stdscr):
 				"Item3",
 				]
 		commandMap = (
-			('j', 'scrollDown'),
-			('k', 'scrollUp'),
-			('q', 'exit')
+			('j', MenuAction.scrollDown),
+			('k', MenuAction.scrollUp),
+			('q', MenuAction.exit)
 		)
 
 		headline = "Main Menu"
