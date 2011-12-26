@@ -22,11 +22,15 @@ def run(stdscr):
 			del winObj.menuList[winObj.selectedIndex]
 			del winObj.itemList[absIndex]
 			del winObj.data["pathList"][absIndex]
+			GoogleBot.delete(item)
 			winObj.numMenuPages = math.ceil(len(winObj.itemList) * 1.0 / winObj.itemsPerPage)
 			if len(winObj.menuList) == 0:
 				winObj.menuPage -= 1
 				winObj.displaySize = winObj.itemsPerPage
 				winObj.win.clear()
+			if winObj.selectedIndex+1 > len(winObj.itemList):
+				winObj.selectedIndex -= 1
+
 			startIndex = (winObj.menuPage * winObj.displaySize)
 			endIndex = (startIndex + winObj.displaySize)
 			winObj.menuList = winObj.itemList[startIndex:endIndex]
@@ -35,8 +39,6 @@ def run(stdscr):
 					winObj.win.clear()
 					winObj.win.addstr("There are no snippets to delete!")
 					winObj.win.refresh()
-			#winObj.win.refresh()
-			#GoogleBot.delete(item)
 	
 	MenuAction.add_action(deleteItem)
 
