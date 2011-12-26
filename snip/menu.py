@@ -182,6 +182,10 @@ class MenuAction:
 	previous menu
 	
 	Be sure to declare the methods as static
+
+	The list of properties MenuAction methods have access to can be found
+	in the Menu class comments:
+
 	'''
 
 	@staticmethod
