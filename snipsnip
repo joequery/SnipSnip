@@ -23,6 +23,10 @@ def run(stdscr):
 			del winObj.itemList[absIndex]
 			del winObj.data["pathList"][absIndex]
 			winObj.numMenuPages = math.ceil(len(winObj.itemList) * 1.0 / winObj.itemsPerPage)
+			if len(winObj.menuList) == 0:
+				winObj.menuPage -= 1
+				winObj.displaySize = winObj.itemsPerPage
+				winObj.win.clear()
 			startIndex = (winObj.menuPage * winObj.displaySize)
 			endIndex = (startIndex + winObj.displaySize)
 			winObj.menuList = winObj.itemList[startIndex:endIndex]
