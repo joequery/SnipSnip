@@ -50,11 +50,11 @@ def run(stdscr):
 	# all the menus. Needs to be a tuple of tuples in order to preserve
 	# order during iteration.
 	STANDARD_MAP = (
-			('j', 'scrollDown'),
-			('k', 'scrollUp'),
-			('l', 'nextPage'),
-			('h', 'prevPage'),
-			('b', 'back')
+			('j', MenuAction.scrollDown),
+			('k', MenuAction.scrollUp),
+			('l', MenuAction.nextPage),
+			('h', MenuAction.prevPage),
+			('b', MenuAction.back)
 		)
 
 	'''
@@ -203,9 +203,9 @@ def run(stdscr):
 				"Exit"
 				]
 		commandMap = (
-			('j', 'scrollDown'),
-			('k', 'scrollUp'),
-			('q', 'exit')
+			('j', MenuAction.scrollDown),
+			('k', MenuAction.scrollUp),
+			('q', MenuAction.exit)
 		)
 
 		headline = "Main Menu"
@@ -252,10 +252,10 @@ def run(stdscr):
 		pathList = [x[1] for x in results]
 
 		commandMap = (
-				('j', 'scrollDown'),
-				('k', 'scrollUp'),
-				('b', 'back'),
-				('q', 'exit'),
+				('j', MenuAction.scrollDown),
+				('k', MenuAction.scrollUp),
+				('b', MenuAction.back),
+				('q', MenuAction.exit),
 		)
 
 		menu = Menu(midWin, itemList, commandMap, FORMAT)

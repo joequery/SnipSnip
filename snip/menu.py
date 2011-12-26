@@ -33,12 +33,12 @@ class Menu:
 		self.itemList = itemList
 		self.commandMap = commandMap
 		self.FORMAT = FORMAT
-		self.__FORCE_EXIT = False
+		self.FORCE_EXIT = False
 
 
 	def activate(self, itemsPerPage, coords=(0,0)):
 		'''
-		Displays a scrollable menu. Returns a tuple (self.__selectedIndex, 
+		Displays a scrollable menu. Returns a tuple (self.selectedIndex, 
 		totalIndex), representing the location of the menu selector 
 		and the items total place in the list respectively
 
@@ -55,46 +55,51 @@ class Menu:
 		selectedIndex: The index of the currently selected menu item
 		menuPage: The current "page" of the menu. 
 		numMenuPages: How many menu pages there are total
-		menuList: The section of the self.__menuList currently viewable
-		displaySize: Initially itemsPerPage, changes if self.__menuList is small
+		menuList: The section of the self.menuList currently viewable
+		displaySize: Initially itemsPerPage, changes if self.menuList is small
 		overallIndex: The index of the selected item. Will be -1 if user exits
 		'''
-		self.__selectedIndex = 0
-		self.__menuPage = 0
-		self.__numMenuPages = math.ceil(len(self.itemList) * 1.0 / itemsPerPage)
-		self.__itemsPerPage = min(itemsPerPage, len(self.itemList))
-		self.__displaySize = self.__itemsPerPage
-		self.__menuList = self.itemList[0:self.__displaySize]
-		self.__overallIndex = 0
+		self.selectedIndex = 0
+		self.menuPage = 0
+		self.numMenuPages = math.ceil(len(self.itemList) * 1.0 / itemsPerPage)
+		self.itemsPerPage = min(itemsPerPage, len(self.itemList))
+		self.displaySize = self.itemsPerPage
+		self.menuList = self.itemList[0:self.displaySize]
+		self.overallIndex = 0
 
 		###############################################################
 		# Display the actual menu now!
 		###############################################################
 
 		# Display the first menu items
-		self.__display_menu_from_list(self.__menuList, self.__selectedIndex, coords)
+		self.display_menu_from_list(self.menuList, self.selectedIndex, coords)
 
 		keepLooping = True
 		while keepLooping:
 			c = self.win.getch()
+			keys = [x for (x,y) in self.commandMap]
 			# If an integer, then the user has made a selection. Menu label
 			# begins at 1, so subtract 1 from users choice. Force an exit
 			# since the selection was made.
-			if c in range(49, 49 + self.__displaySize):
-				self.__selectedIndex = (c) - 49 # See ASCII table
-				self.__display_menu_from_list(self.__menuList, self.__selectedIndex, coords)
+			if c in range(49, 49 + self.displaySize):
+				self.selectedIndex = (c) - 49 # See ASCII table
+				self.display_menu_from_list(self.menuList, self.selectedIndex, coords)
 				break
 			# If not an integer, look through the commandMap and execute the
 			# provided function
-			elif chr(c) in [x for (x,y) in self.commandMap]:
-				funcName = dict(self.commandMap)[chr(c)]
-				getattr(self, "_Menu__%s" % funcName)()
+			elif chr(c) in keys:
+				# Get the corresponding function in the tuple.
+				i = keys.index(chr(c))
+				func = [y for (x,y) in self.commandMap][i]
 
-			self.__display_menu_from_list(self.__menuList, self.__selectedIndex, coords)
+				# Pass the current window object to the function.
+				func(self)
+
+			self.display_menu_from_list(self.menuList, self.selectedIndex, coords)
 
 			# If '\n', then enter was pressed and a selection was made. Also check for
 			# the FORCE_EXIT flag.
-			keepLooping = c != ord('\n') and self.__FORCE_EXIT == False
+			keepLooping = c != ord('\n') and self.FORCE_EXIT == False
 			# End while
 
 		self.win.refresh()
@@ -102,16 +107,16 @@ class Menu:
 		# Calculate the overall index of the selected item and return it, along
 		# with the relative index of the menu. A forced exit will contain a negative
 		# number: -2 for exit, -1 for back to previous menu 
-		if self.__FORCE_EXIT != True:
-			self.__overallIndex = self.__menuPage * self.__itemsPerPage + self.__selectedIndex
+		if self.FORCE_EXIT != True:
+			self.overallIndex = self.menuPage * self.itemsPerPage + self.selectedIndex
 		else:
-			return (self.__overallIndex, False)
+			return (self.overallIndex, False)
 
 
     # Return the index and the value
-		return (self.__overallIndex, self.itemList[self.__overallIndex])
+		return (self.overallIndex, self.itemList[self.overallIndex])
 
-	def __display_menu_from_list(self, myList, activeIndex = False, coords = (0,0)):
+	def display_menu_from_list(self, myList, activeIndex = False, coords = (0,0)):
 		'''
 		Display a menu from a list myList. Will look like:
 		1. Item0
@@ -147,8 +152,7 @@ class Menu:
 		commandsPerLine = 4
 		commandList = []
 		for (key,funcName) in self.commandMap:
-			fullFuncName = "_Menu__%s" % funcName
-			docString = getattr(self, fullFuncName).__doc__.strip()
+			docString = funcName.__doc__.strip()
 			commandList.append( "(%s)%s" % (key, docString) )
 
 		returnStr = ""
@@ -168,66 +172,86 @@ class Menu:
 			returnStr += suffix
 		return returnStr
 
-	###############################################################
-	# CommandMap "API". 
-	###############################################################
+###############################################################
+# MenuAction "API". 
+###############################################################
+class MenuAction:
+	'''
+	This class defines menu actions that hook into the Menu class. 
+	Common menu actions include scrolling up, scrolling down, going to the
+	previous menu
+	
+	Be sure to declare the methods as static
+	'''
 
-	def __scrollUp(self):
+
+	@staticmethod
+	def scrollUp(winObj):
 		'''Scroll Up'''
-		if len(self.itemList) > 0:
-			self.__selectedIndex = (self.__selectedIndex - 1) % self.__displaySize
+		if len(winObj.itemList) > 0:
+			winObj.selectedIndex = (winObj.selectedIndex - 1) % winObj.displaySize
 
-	def __scrollDown(self):
+	@staticmethod
+	def scrollDown(winObj):
 		'''Scroll Down'''
-		if len(self.itemList) > 0:
-			self.__selectedIndex = (self.__selectedIndex + 1) % self.__displaySize
+		if len(winObj.itemList) > 0:
+			winObj.selectedIndex = (winObj.selectedIndex + 1) % winObj.displaySize
 
-	def __nextPage(self):
+	@staticmethod
+	def nextPage(winObj):
 		'''Next Page'''
 		# Make sure we don't go too far forward.
-		if self.__menuPage < self.__numMenuPages - 1:
-			self.__menuPage += 1
-			startIndex = (self.__menuPage * self.__displaySize)
-			endIndex = (startIndex + self.__displaySize)
-			self.__menuList = self.itemList[startIndex:endIndex]
-			self.__displaySize = min(self.__itemsPerPage, len(self.__menuList))
-			self.__selectedIndex = 0
+		if winObj.menuPage < winObj.numMenuPages - 1:
+			winObj.menuPage += 1
+			startIndex = (winObj.menuPage * winObj.displaySize)
+			endIndex = (startIndex + winObj.displaySize)
+			winObj.menuList = winObj.itemList[startIndex:endIndex]
+			winObj.displaySize = min(winObj.itemsPerPage, len(winObj.menuList))
+			winObj.selectedIndex = 0
 
-			# If the menuList is smaller than self.__itemsPerPage, there
+			# If the menuList is smaller than winObj.itemsPerPage, there
 			# will be menu items left over. We'll need to clear
 			# to get rid of these
-			if self.__displaySize < self.__itemsPerPage:
-				self.win.clear()
+			if winObj.displaySize < winObj.itemsPerPage:
+				winObj.win.clear()
 
-	def __prevPage(self):
+	@staticmethod
+	def prevPage(winObj):
 		''' Previous Page '''
 		# Make sure we don't go too far back!
-		if self.__menuPage > 0:
-			self.__menuPage -= 1
-			self.__displaySize = self.__itemsPerPage
-			startIndex = (self.__menuPage * self.__displaySize)
-			endIndex = (startIndex + self.__displaySize)
-			self.__menuList = self.itemList[startIndex:endIndex]
-			self.__selectedIndex = 0
+		if winObj.menuPage > 0:
+			winObj.menuPage -= 1
+			winObj.displaySize = winObj.itemsPerPage
+			startIndex = (winObj.menuPage * winObj.displaySize)
+			endIndex = (startIndex + winObj.displaySize)
+			winObj.menuList = winObj.itemList[startIndex:endIndex]
+			winObj.selectedIndex = 0
 
-	def __selectBottom(self):
+	@staticmethod
+	def selectBottom(winObj):
 		'''Select Bottom'''
-		self.__selectedIndex = len(self.__menuList) - 1
+		winObj.selectedIndex = len(winObj.menuList) - 1
 
-	def __selectTop(self):
+	@staticmethod
+	def selectTop(winObj):
 		'''Select Top'''
-		self.__selectedIndex = 0
+		winObj.selectedIndex = 0
 
-	def __exit(self):
+	@staticmethod
+	def exit(winObj):
 		'''Quit'''
-		self.__FORCE_EXIT = True
-		self.__overallIndex = False
+		winObj.FORCE_EXIT = True
+		winObj.overallIndex = False
 
-	def __back(self):
+	@staticmethod
+	def back(winObj):
 		'''Previous Menu'''
-		self.__FORCE_EXIT = True
-		self.__overallIndex = -1
+		winObj.FORCE_EXIT = True
+		winObj.overallIndex = -1
 
+###############################################################
+# Menu helper methods
+###############################################################
 
 def start_menu_cycle(menu, menuCycler):
 	'''Begin the menu cycle, starting at menu with cycler menuCycler'''
