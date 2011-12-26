@@ -184,6 +184,13 @@ class MenuAction:
 	Be sure to declare the methods as static
 	'''
 
+	@staticmethod
+	def add_action(func):
+		'''
+		Add a function to the API. Will be callable by MenuAction.funcName
+		in a commandMap
+		'''
+		setattr(MenuAction, func.__name__, staticmethod(func))
 
 	@staticmethod
 	def scrollUp(winObj):

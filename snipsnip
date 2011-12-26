@@ -7,7 +7,11 @@ from snip.curseshelpers import *
 from snip.search import *
 from snip.globals import *
 
+
 def run(stdscr):
+	########################################################
+	# Custom menu methods for this program
+	########################################################
 
 	########################################################
 	# Configure the curses environment
