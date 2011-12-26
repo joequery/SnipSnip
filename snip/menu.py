@@ -151,8 +151,8 @@ class Menu:
 
 		commandsPerLine = 4
 		commandList = []
-		for (key,funcName) in self.commandMap:
-			docString = funcName.__doc__.strip()
+		for (key,func) in self.commandMap:
+			docString = func.__doc__.strip()
 			commandList.append( "(%s)%s" % (key, docString) )
 
 		returnStr = ""
