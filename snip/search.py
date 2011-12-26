@@ -59,14 +59,12 @@ class Searcher:
 		text_editor(fileName)
 		self.writer.commit()
 	
-	def delete(self, snipTuple):
+	def delete(self, path):
 		'''
 		Delete a snippet from the index and the file system.
-		snipTuple is in the form of (description, path). 
-		Ex: (u'hello, world!', u'bash/hello_world_23049283042')
+		path is the lang/snippetDescription path of the snippet
 		'''
 		
-		path = snipTuple[1]
 		lang = path.split('/')[0]
 		snippet = path.split('/')[1]
 		self.get_writer()

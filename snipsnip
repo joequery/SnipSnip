@@ -12,6 +12,30 @@ def run(stdscr):
 	########################################################
 	# Custom menu methods for this program
 	########################################################
+	def deleteItem(winObj):
+		'''Delete selected item'''
+		# Don't try to delete an empty list
+		if len(winObj.itemList) > 0:
+			winObj.win.clear()
+			absIndex = MenuAction.abs_index(winObj)
+			item = winObj.data["pathList"][absIndex]
+			del winObj.menuList[winObj.selectedIndex]
+			del winObj.itemList[absIndex]
+			del winObj.data["pathList"][absIndex]
+			winObj.numMenuPages = math.ceil(len(winObj.itemList) * 1.0 / winObj.itemsPerPage)
+			startIndex = (winObj.menuPage * winObj.displaySize)
+			endIndex = (startIndex + winObj.displaySize)
+			winObj.menuList = winObj.itemList[startIndex:endIndex]
+			winObj.displaySize = min(winObj.itemsPerPage, len(winObj.menuList))
+			if len(winObj.itemList) == 0:
+					winObj.win.clear()
+					winObj.win.addstr("There are no snippets to delete!")
+					winObj.win.refresh()
+			#winObj.win.refresh()
+			#GoogleBot.delete(item)
+	
+	MenuAction.add_action(deleteItem)
+
 
 	########################################################
 	# Configure the curses environment
@@ -138,7 +162,7 @@ def run(stdscr):
 	standard menus.
 	'''
 
-	def simple_menu(headline, itemList, commandMap, itemsPerPage, argList):
+	def simple_menu(headline, itemList, commandMap, itemsPerPage, argList, data=None):
 		'''
 		Create a simple menu that has a headline, menu, command
 		display, and breadcrumb navigation. This is specific to this program 
@@ -169,7 +193,7 @@ def run(stdscr):
 		'''
 
 		# Get the menu object
-		menu = Menu(midWin, itemList, commandMap, FORMAT)
+		menu = Menu(midWin, itemList, commandMap, FORMAT, data)
 
 		# Write the headline to the top screen
 		topWin.write(headline)
@@ -262,12 +286,12 @@ def run(stdscr):
 				('q', MenuAction.exit),
 		)
 
-		menu = Menu(midWin, itemList, commandMap, FORMAT)
+		# Send pathList data to menu for use in MenuAction functions.
+		data = {'pathList': pathList}
 		headline = "Search Results: %s" % query
-
 		if len(itemList) == 0:
 			midWin.flash("\nThere were no results for '%s'" % query)
-		index, selection, pushPop = simple_menu(headline, itemList, commandMap, 9, argList)
+		index, selection, pushPop = simple_menu(headline, itemList, commandMap, 9, argList, data)
 
 		# If user exits, don't attempt to get selected item (since it wasn't selected)
 		# If user doesn't exit, get the path corresponding to the selection and open
@@ -348,13 +372,21 @@ def run(stdscr):
 		itemList = [x[0] for x in results]
 		pathList = [x[1] for x in results]
 
-		commandMap = STANDARD_MAP
+		commandMap = (
+				('j', MenuAction.scrollDown),
+				('k', MenuAction.scrollUp),
+				('l', MenuAction.nextPage),
+				('h', MenuAction.prevPage),
+				('b', MenuAction.back),
+				('d', MenuAction.deleteItem)
+			)
 
-		menu = Menu(midWin, itemList, commandMap, FORMAT)
+		# Send pathList data to menu for use in MenuAction functions.
+		data = {'pathList': pathList}
 		if len(itemList) == 0:
 			midWin.flash("\nThere are no %s snippets yet." % lang)
 		headline = "%s Programming Snippets" % lang
-		index, selection, pushPop = simple_menu(headline, itemList, commandMap, 9, argList)
+		index, selection, pushPop = simple_menu(headline, itemList, commandMap, 9, argList, data)
 
 		# If user exits, don't attempt to get selected item (since it wasn't selected)
 		# If user doesn't exit, get the path corresponding to the selection and open

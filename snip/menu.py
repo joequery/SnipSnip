@@ -28,12 +28,13 @@ class Menu:
 	back
 	'''
 
-	def __init__(self, window, itemList, commandMap, FORMAT):
+	def __init__(self, window, itemList, commandMap, FORMAT, data=None):
 		self.win = window.win
 		self.itemList = itemList
 		self.commandMap = commandMap
 		self.FORMAT = FORMAT
 		self.FORCE_EXIT = False
+		self.data = data
 
 
 	def activate(self, itemsPerPage, coords=(0,0)):
@@ -187,6 +188,15 @@ class MenuAction:
 	in the Menu class comments:
 
 	'''
+
+	@staticmethod
+	def abs_index(winObj):
+		'''
+		Helper function that returns the absolute index of the selected item
+		'''
+		return winObj.selectedIndex + winObj.itemsPerPage * winObj.menuPage
+
+
 
 	@staticmethod
 	def add_action(func):
