@@ -118,6 +118,7 @@ def run(stdscr):
 			('b', MenuAction.back)
 		)
 
+
 	'''
 	=========================== MENU FUNCTIONS =========================== 
 		We now define a group of functions we'll call menu functions. These menu
@@ -317,6 +318,8 @@ def run(stdscr):
 				('k', MenuAction.scrollUp),
 				('b', MenuAction.back),
 				('q', MenuAction.exit),
+				('d', MenuAction.deleteItem),
+				('r', MenuAction.rename)
 		)
 
 		# Send pathList data to menu for use in MenuAction functions.
