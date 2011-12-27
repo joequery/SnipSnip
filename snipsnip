@@ -36,9 +36,8 @@ def run(stdscr):
 			winObj.menuList = winObj.itemList[startIndex:endIndex]
 			winObj.displaySize = min(winObj.itemsPerPage, len(winObj.menuList))
 			if len(winObj.itemList) == 0:
-					winObj.win.clear()
-					winObj.win.addstr("There are no snippets to delete!")
-					winObj.win.refresh()
+					winObj.window.flash("There are no snippets to delete!")
+	
 	
 	MenuAction.add_action(deleteItem)
 

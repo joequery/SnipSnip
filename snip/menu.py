@@ -29,6 +29,7 @@ class Menu:
 	'''
 
 	def __init__(self, window, itemList, commandMap, FORMAT, data=None):
+		self.window = window
 		self.win = window.win
 		self.itemList = itemList
 		self.commandMap = commandMap
