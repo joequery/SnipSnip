@@ -13,7 +13,7 @@ def run(stdscr):
 	# Custom menu methods for this program
 	########################################################
 	def deleteItem(winObj):
-		'''Delete selected item'''
+		'''Delete selected'''
 		# Don't try to delete an empty list
 		if len(winObj.itemList) > 0:
 			winObj.win.clear()
@@ -38,7 +38,35 @@ def run(stdscr):
 			if len(winObj.itemList) == 0:
 					winObj.window.flash("There are no snippets to delete!")
 	
+	def rename(winObj):
+		'''Rename selected'''
+		winObj.win.clear()
+		absIndex = MenuAction.abs_index(winObj)
+		itemPath = winObj.data["pathList"][absIndex]
+		itemName = winObj.menuList[winObj.selectedIndex]
+
+		winObj.win.addstr("Rename ")
+		winObj.win.addstr(itemName, curses.color_pair(FORMAT["plain"]))
+		winObj.win.addstr("...\n")
+		winObj.win.addstr("New description(CTRL-C to cancel): ")
+
+		# Don't do anything if KeyboardInterrupt is sent
+		try:
+			newDescription = winObj.window.read()
+
+			# Make sure the description isn't blank
+			if newDescription != '':
+				# Rename the items in the lists as well as the index.
+				winObj.menuList[winObj.selectedIndex] = newDescription
+				winObj.itemList[absIndex] = newDescription
+				GoogleBot.rename(itemPath, newDescription)
+				winObj.window.clear();
+		except KeyboardInterrupt:
+			winObj.window.clear();
+			curses.curs_set(0)  
+			curses.noecho()
 	
+	MenuAction.add_action(rename)
 	MenuAction.add_action(deleteItem)
 
 
@@ -383,7 +411,8 @@ def run(stdscr):
 				('l', MenuAction.nextPage),
 				('h', MenuAction.prevPage),
 				('b', MenuAction.back),
-				('d', MenuAction.deleteItem)
+				('d', MenuAction.deleteItem),
+				('r', MenuAction.rename)
 			)
 
 		# Send pathList data to menu for use in MenuAction functions.

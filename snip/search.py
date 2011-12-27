@@ -45,8 +45,8 @@ class Searcher:
 
 		# pathName looks like so: python/how_to_use_lists_12342342
 		# fileName is the absolute path to the pathName on the system.
-		pathName = os.path.join(lang_dir(lang, False), 
-				snippet_file_name(description))
+		fileName = snippet_file_name(description)
+		pathName = os.path.join(lang_dir(lang, False), fileName)
 
 		self.writer.add_document(
 				description = unicode(self.singularize(description).lower()),
@@ -55,8 +55,24 @@ class Searcher:
 				lang = unicode(lang)
 		)
 
-		fileName = os.path.join(lang_dir(lang), snippet_file_name(description))
+		fileName = os.path.join(lang_dir(lang), fileName)
 		text_editor(fileName)
+		self.writer.commit()
+	
+	def add_file_to_index(self, path, description):
+		'''
+		Add a snippet that already exists on the file system to the index
+		'''
+		self.get_writer()
+		lang = path.split('/')[0]
+
+		self.writer.add_document(
+				description = unicode(self.singularize(description).lower()),
+				_stored_description = unicode(description),
+				path = unicode(path),
+				lang = unicode(lang)
+		)
+
 		self.writer.commit()
 	
 	def delete(self, path):
@@ -77,11 +93,42 @@ class Searcher:
 		# it from the file system.
 
 		# Get the full path of the snippet file.
-		snipDir = os.path.join(lang_dir(lang), snippet)
+		snipLoc = os.path.join(lang_dir(lang), snippet)
 
 		# Now we delete it! We're done!
-		os.remove(snipDir)
+		os.remove(snipLoc)
+	
+	def rename(self, path, newDescription):
+		'''
+		Update a snippet based on the path. Add a new description via newDescription
+		'''
 
+		# 1. Store the contents of the snippet file in path 
+		# 2. Get filename from newDescription and copy contents 
+		# 3. Delete the snippet and remove from index
+		# 4. Create new snippet
+
+		# 1. Store the contents of the old snippet file 
+		lang = path.split('/')[0]
+		oldSnippetFileName = path.split('/')[1]
+		oldSnippetLoc = os.path.join(lang_dir(lang), oldSnippetFileName)
+		f = open(oldSnippetLoc, 'r')
+		snippetContent = f.read()
+		f.close()
+
+		# 2. Get filename from newDescription and copy contents 
+		newFileName = snippet_file_name(newDescription)
+		newLoc = os.path.join(lang_dir(lang), newFileName)
+		f = open(newLoc, 'w')
+		f.write(snippetContent)
+		f.close()
+
+		# 3. Delete the snippet and remove from index
+		self.delete(path)
+
+		# 4. Create new snippet
+		newPath = os.path.join(lang_dir(lang, False), newFileName)
+		self.add_file_to_index(newPath, newDescription)
 
 
 	
