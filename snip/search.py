@@ -155,7 +155,7 @@ class Searcher:
 		with self.ix.searcher() as searcher:
 			qp = QueryParser("lang", self.ix.schema)
 			query = qp.parse(unicode(lang))
-			results = searcher.search(query, sortedby="description")
+			results = searcher.search(query, sortedby="description", limit=None)
 			returnThis = [ (x['description'].lower(), x['path']) for x in results]
 
 			# Sort by alphabet, case insensitive
