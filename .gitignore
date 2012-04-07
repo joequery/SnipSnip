@@ -3,3 +3,5 @@ snipsnip/snippets/*
 build/*
 dist/*
 *egg-info/*
+*.pyc
+env/*
