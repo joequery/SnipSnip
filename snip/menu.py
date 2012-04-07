@@ -89,7 +89,7 @@ class Menu:
 				break
 			# If not an integer, look through the commandMap and execute the
 			# provided function
-			elif chr(c) in keys:
+			elif c in range(0, 255) and chr(c) in keys:
 				# Get the corresponding function in the tuple.
 				i = keys.index(chr(c))
 				func = [y for (x,y) in self.commandMap][i]
