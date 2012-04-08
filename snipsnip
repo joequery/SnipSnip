@@ -89,9 +89,9 @@ def run(stdscr):
 	t = WindowTemplate(width=80, left=0)
 
 	# Create the individual windows
-	topWin = Window(t, top=0, height=3)
-	midWin = Window(t, top=3, height=11)
-	botWin = Window(t, top=14, height=5)
+	topWin = Window(t, top=0, height=2)
+	midWin = Window(t, top=2, height=13)
+	botWin = Window(t, top=16, height=5)
 
 	# Uncomment to see borders around the windows for positioning 
 	# reference.
@@ -244,7 +244,7 @@ def run(stdscr):
 
 		# Display menu in the middle window and return users selection
 		# and the index of the selection.
-		index, selection = menu.activate(itemsPerPage, (1,1))
+		index, selection = menu.activate(itemsPerPage, (0,1))
 
 		# Clear all the windows before we exit
 		topWin.clear(); midWin.clear(); botWin.clear();
