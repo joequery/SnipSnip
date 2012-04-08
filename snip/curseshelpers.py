@@ -41,6 +41,9 @@ class Window:
 		self.write = self.win.addstr
 		self.draw = self.win.refresh
 
+		# Allow arrow keys
+		self.win.keypad(1)
+
 	def println(self, s):
 		self.win.addstr(s + "\n")
 
@@ -103,10 +106,8 @@ def text_editor(fileName):
 	except:
 		f = open(fullPath, 'w')
 
-	# Open up the default text editor. For some reason, if we were to just open
-	# up the fullPath file and be done with it, the cursor will begin to blink
-	# once we go back to the menu, no matter how many times we alter the curs_set
-	# variable. Weeeeeeird.
-	#with tempfile.NamedTemporaryFile(suffix=".tmp") as tmpfile:
-	subprocess.call([EDITOR, f.name])
+	# Have to init and endwin to prevent cursor from sticking around
+	curses.initscr()
+	proc = subprocess.call([EDITOR, f.name])
+	curses.endwin()
 	f.close()
