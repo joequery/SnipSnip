@@ -81,6 +81,7 @@ class Window:
 
     # Turn on echo of input text and blinking cursor.
     curses.curs_set(1)  
+    self.win.clrtoeol()
     curses.echo()
     text = self.win.getstr()
     curses.noecho()
