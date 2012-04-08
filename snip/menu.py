@@ -69,6 +69,18 @@ class Menu:
 		self.menuList = self.itemList[0:self.displaySize]
 		self.overallIndex = 0
 
+		# Bind arrow keys. Up/down moves selector, left moves to previous menu
+		# Make Home and End go to top/bottom
+		arrowFunctions = (
+				(curses.KEY_UP, MenuAction.scrollUp),
+				(curses.KEY_DOWN, MenuAction.scrollDown),
+				(curses.KEY_LEFT, MenuAction.prevPage),
+				(curses.KEY_RIGHT, MenuAction.nextPage),
+				(curses.KEY_HOME, MenuAction.selectTop),
+				(curses.KEY_END, MenuAction.selectBottom)
+		)
+		arrowKeys = [x for (x,y) in arrowFunctions]
+
 		###############################################################
 		# Display the actual menu now!
 		###############################################################
@@ -93,6 +105,14 @@ class Menu:
 				# Get the corresponding function in the tuple.
 				i = keys.index(chr(c))
 				func = [y for (x,y) in self.commandMap][i]
+
+				# Pass the current window object to the function.
+				func(self)
+		 
+			# If not a standard ascii char, see if an arrow button was pressed.
+			elif c in arrowKeys:
+				i = arrowKeys.index(c)
+				func = [y for (x,y) in arrowFunctions][i]
 
 				# Pass the current window object to the function.
 				func(self)
