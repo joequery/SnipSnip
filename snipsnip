@@ -9,607 +9,607 @@ from snip.globals import *
 
 
 def run(stdscr):
-	########################################################
-	# Custom menu methods for this program
-	########################################################
-	def deleteItem(winObj):
-		'''Delete selected'''
-		# Don't try to delete an empty list
-		if len(winObj.itemList) > 0:
-			winObj.win.clear()
-			absIndex = MenuAction.abs_index(winObj)
-			item = winObj.data["pathList"][absIndex]
-			del winObj.menuList[winObj.selectedIndex]
-			del winObj.itemList[absIndex]
-			del winObj.data["pathList"][absIndex]
-			GoogleBot.delete(item)
-			winObj.numMenuPages = math.ceil(len(winObj.itemList) * 1.0 / winObj.itemsPerPage)
-			if len(winObj.menuList) == 0:
-				winObj.menuPage -= 1
-				winObj.displaySize = winObj.itemsPerPage
-				winObj.win.clear()
-			if winObj.selectedIndex+1 > len(winObj.itemList):
-				winObj.selectedIndex -= 1
-
-			startIndex = (winObj.menuPage * winObj.displaySize)
-			endIndex = (startIndex + winObj.displaySize)
-			winObj.menuList = winObj.itemList[startIndex:endIndex]
-			winObj.displaySize = min(winObj.itemsPerPage, len(winObj.menuList))
-			if len(winObj.itemList) == 0:
-					winObj.window.flash("There are no snippets to delete!")
-	
-	def rename(winObj):
-		'''Rename selected'''
-		winObj.win.clear()
-		absIndex = MenuAction.abs_index(winObj)
-		itemPath = winObj.data["pathList"][absIndex]
-		itemName = winObj.menuList[winObj.selectedIndex]
-
-		winObj.win.addstr("Rename ")
-		winObj.win.addstr(itemName, curses.color_pair(FORMAT["plain"]))
-		winObj.win.addstr("...\n")
-		winObj.win.addstr("New description(CTRL-C to cancel): ")
-
-		# Don't do anything if KeyboardInterrupt is sent
-		try:
-			newDescription = winObj.window.read()
-
-			# Make sure the description isn't blank
-			if newDescription != '':
-				# Rename the items in the lists as well as the index.
-				winObj.menuList[winObj.selectedIndex] = newDescription
-				winObj.itemList[absIndex] = newDescription
-				GoogleBot.rename(itemPath, newDescription)
-				winObj.window.clear();
-		except KeyboardInterrupt:
-			winObj.window.clear();
-			curses.curs_set(0)  
-			curses.noecho()
-	
-	MenuAction.add_action(rename)
-	MenuAction.add_action(deleteItem)
-
-
-	########################################################
-	# Configure the curses environment
-	########################################################
-	curses.curs_set(0)  # Hide cursor
-	
-	# Store format in a dict for convenience and readability. 
-	# Think of it like a c-style enum.
-	FORMAT = {
-		"plain": 1,
-		"highlight": 2
-	}
-	curses.init_pair(1, curses.COLOR_GREEN, curses.COLOR_BLACK)
-	curses.init_pair(2, curses.COLOR_BLACK ,curses.COLOR_GREEN)
-
-	# Create a template for the windows. We'll assume the standard
-	# width of 80 columns and we'll align everything to the left.
-	t = WindowTemplate(width=80, left=0)
-
-	# Create the individual windows
-	topWin = Window(t, top=0, height=2)
-	midWin = Window(t, top=2, height=13)
-	botWin = Window(t, top=16, height=5)
-
-	# Uncomment to see borders around the windows for positioning 
-	# reference.
-	#topWin.test(); midWin.test(); botWin.test();
-
-	# We'll get this from a file later.
-	# Global variables hack. Needed to update language file but only as 
-	# needed. Nested functions can't alter a global variable, and we need
-	# the functions nested in order to use the curses wrapper (necessary to
-	# avoid genuinely screwing up the user's screen
-	class g:
-		CATEGORIES = quick_read(LANG_FILE)
-		
-	#g.CATEGORIES = sorted(g.CATEGORIES, key = str.lower)
-
-	# This is the standard command mapping that will be used on almost
-	# all the menus. Needs to be a tuple of tuples in order to preserve
-	# order during iteration.
-	STANDARD_MAP = (
-			('j', MenuAction.scrollDown),
-			('k', MenuAction.scrollUp),
-			('l', MenuAction.nextPage),
-			('h', MenuAction.prevPage),
-			('b', MenuAction.back)
-		)
-
-
-	'''
-	=========================== MENU FUNCTIONS =========================== 
-		We now define a group of functions we'll call menu functions. These menu
-	functions essentially define the type of selections the user will be able
-	to make. Below these menu function definitions is a menu mapping function 
-	called	get_next_menu which dictates which menu the user will be 
-	redirected to after	making a selection from the current menu. 
-		It's important to note that not all 'menus' will actually be the 
-	standard menu where you are given a list of items to select from. Some
-	menus may simply display information or may request user input, and would
-	be better defined as 'screens'. In fact, it may actually be worthwhile to
-	rename 'menu' to 'screen' throughout the codebase to avoid this confusion
-	since all menus are screens but not all screens are menus. 
-
-	Each menu function should have a parameter of argList (explained below)
-	and return a 3-tuple of (index, selection, pushPop)
-
-	index: index serves two roles. On the surface, index is just the index
-	of the selected item from an itemList. However, since almost all programs
-	need to establish a 'terminating menu' where the user can only stay in 
-	the current window or go back to previous ones, we use the index as a form
-	of navigation as well. Throughout the program, a returned index of -1 
-	indicates	that the user should be redirected back to the previous menu.
-	Consider a simple phonebook application. Eventually the user will need to
-	input data for a new telephone entry. Clearly no selection from a menu is
-	being made at the moment they put in an entry, but to keep consistent 
-	with our get_next_menu mapping, we need	to return SOME index. In some
-	instances, -2 is used to indicate a forced exit.
-
-	selection: In the event of a standard menu, selection should return the
-	string value of the selection. In the event of a non-standard menu (such
-	as a screen for user input or information display), the selection value is
-	irrelevant and any arbitrary value will work.
-
-	pushPop: Probably the most complicated of the tuple is the pushPop return 
-	value. pushPop can be one of three values: False, None, and True. 
-	Each menu function will be passed an argument list named argList. 
-	The pushPop value determines how to manipulate the argList list before
-	we go to the next menu.
-
-		If pushPop is:
-		True: Append the current menu's returned selection value to the argList
-		so the next menu will have access to the value.
-
-		False: Pop the last argList value, removing the previous menus' value in
-		the argList (if any was provided)
-
-		None: Pass the argList as is to the next menu function.
-
-	As an example, consider an application that stores the users physical
-	address and contains the following menus:
-		stateMenu,
-		cityMenu,
-		getStreetAddressInput
-		confirmAndSave
-
-	From stateMenu, the user selects the state they live in. This data will
-	be needed by cityMenu to build a list of possible cities, so pushPop for
-	stateMenu should be True so the selected state value is appended to the 
-	argList and is this made available to the cityMenu.
-
-	Since the users city will be stored, we need to add the selected city
-	to the argList so we'll have access to it in the confirmAndSave screen.
-	Thus, the cityMenu pushPop value should be True. This scenario is 
-	exactly the same for getStreetAddressInput and should also return a 
-	pushPop value of True.
-
-	Finally, the confirmAndSave menu allows the user to save the data. Since
-	this is a 'terminating menu' (there are no more menus 'after' this), we 
-	don't need to append the selection of value (something like "Yes, I 
-	confirm this data is correct") to the argList. This the pushPop value of 
-	confirmAndSave is None.
-
-	Whenever possible, use the simple_menu function defined below for 
-	standard menus.
-	'''
-
-	def simple_menu(headline, itemList, commandMap, itemsPerPage, argList, data=None):
-		'''
-		Create a simple menu that has a headline, menu, command
-		display, and breadcrumb navigation. This is specific to this program 
-		to help avoid repitition, and should only be used inside menu functions.
-
-		headline: Headline that will be displayed in the top window.
-		itemList: List of items to be displayed in the middle window
-		commandMap: Command mapping to be displayed in the bottom window
-		itemsPerPage: How many items of the menu will be displayed at once
-		argList: Argument list of the current menu.
-
-		Example usage:
-
-		itemList = [
-				"Item0",
-				"Item1",
-				"Item2",
-				"Item3",
-				]
-		commandMap = (
-			('j', MenuAction.scrollDown),
-			('k', MenuAction.scrollUp),
-			('q', MenuAction.exit)
-		)
-
-		headline = "Main Menu"
-		index, selection = simple_menu(headline, itemList, commandMap, 4, argList)
-		'''
-
-		# Get the menu object
-		menu = Menu(midWin, itemList, commandMap, FORMAT, data)
-
-		# Write the headline to the top screen
-		topWin.write(headline)
-
-		# Write the command mapping to the bottom screen
-		botWin.write(menu.command_str())
-		botWin.write("\n\n")
-
-		# Write the breadcrumb navigation to the bottom screen
-		botWin.write(breadcrumb_nav(argList))
-
-		# Now display what we've written.
-		topWin.draw(); botWin.draw();
-
-		# Display menu in the middle window and return users selection
-		# and the index of the selection.
-		index, selection = menu.activate(itemsPerPage, (0,1))
-
-		# Clear all the windows before we exit
-		topWin.clear(); midWin.clear(); botWin.clear();
-
-		return index, selection, True
-
-	########################################################
-	# Main Menu
-	########################################################
-	def mainMenu(argList):
-		'''Home screen menu'''
-
-		itemList = [
-				"Create a new snippet",
-				"Find a snippet",
-				"Browse snippets",
-				"Manage languages",
-				"Exit"
-				]
-		commandMap = (
-			('j', MenuAction.scrollDown),
-			('k', MenuAction.scrollUp),
-			('q', MenuAction.exit)
-		)
-
-		headline = "Main Menu"
-		return simple_menu(headline, itemList, commandMap, 5, argList)
-
-	########################################################
-	# Searching
-	########################################################
-	def findMenu(argList):
-		'''User selects what language they want to choose for finding snippet'''
-		itemList = g.CATEGORIES
-		commandMap = STANDARD_MAP
-
-		headline = "Find a code snippet: Choose a language/framework"
-		return simple_menu(headline, itemList, commandMap, 9, argList)
-
-
-	def enterQuery(argList):
-		'''User puts in his search term'''
-		lang = argList[1]
-		# Get description of snippet
-		topWin.flash("Find a %s snippet" % lang)
-		midWin.flash("Snippet query (CTRL-C to escape): ")
-		botWin.flash(breadcrumb_nav(argList))
-		try:
-			selection = midWin.read()
-			midWin.clear(); topWin.clear();botWin.clear();
-			index = 1
-		except KeyboardInterrupt:
-			midWin.clear(); topWin.clear();botWin.clear();
-			curses.curs_set(0)  # Hide cursor
-			curses.noecho()
-			index, selection = -1, 0
-
-		return index, selection, True
-
-	def searchResults(argList):
-		'''User gets to view search results'''
-		lang = argList[1]
-		query = argList[2]
-		
-		results = GoogleBot.search(query, lang)
-		itemList = [x[0] for x in results]
-		pathList = [x[1] for x in results]
-
-		commandMap = (
-				('j', MenuAction.scrollDown),
-				('k', MenuAction.scrollUp),
-				('b', MenuAction.back),
-				('q', MenuAction.exit),
-				('d', MenuAction.deleteItem),
-				('r', MenuAction.rename)
-		)
-
-		# Send pathList data to menu for use in MenuAction functions.
-		data = {'pathList': pathList}
-		headline = "Search Results: %s" % query
-		if len(itemList) == 0:
-			midWin.flash("\nThere were no results for '%s'" % query)
-		index, selection, pushPop = simple_menu(headline, itemList, commandMap, 9, argList, data)
-
-		# If user exits, don't attempt to get selected item (since it wasn't selected)
-		# If user doesn't exit, get the path corresponding to the selection and open
-		# it in the default text editor.
-		if index != -1 and selection is not False:
-			text_editor(pathList[index])
-		midWin.clear(); topWin.clear();botWin.clear();
-
-		return index, selection, None
-
-	########################################################
-	# Creating 
-	########################################################
-	def createNewMenu(argList):
-		'''User selects what language they want to choose for new snippet'''
-		itemList = g.CATEGORIES
-		commandMap = STANDARD_MAP
-
-		headline = "Create New Snippet: Choose a language/framework"
-		return simple_menu(headline, itemList, commandMap, 9, argList)
-
-	def createSnippet(argList):
-		'''User creats snippets and can create another or return to main menu'''
-		lang = argList[1]
-		
-		def get_description():
-			botWin.write("\n\n")
-			botWin.write(breadcrumb_nav(argList))
-			topWin.draw(); botWin.draw(); midWin.draw();
-			try:
-				description = midWin.read()
-				GoogleBot.add_snippet_to_index(description, lang)
-				midWin.clear(); topWin.clear();botWin.clear();
-
-			except KeyboardInterrupt:
-				midWin.clear(); topWin.clear();botWin.clear();
-				curses.curs_set(0)  # Hide cursor
-				curses.noecho()
-				description = False
-			return description
-
-		topWin.write("New %s snippet" % lang)
-		midWin.write("Snippet description (CTRL-C to escape): ")
-		description = get_description()
-		while description:
-			topWin.clear(); midWin.clear(); botWin.clear();
-
-			# Get description of snippet
-			topWin.write("'%s' snippet created.\n" % description)
-			topWin.write("Create another %s snippet" % lang)
-			midWin.write("Snippet description (CTRL-C to escape): ")
-			description = get_description()
-
-		return -1, 0, None
-
-	########################################################
-	# Browsing
-	########################################################
-	def browseMenu(argList):
-		''' User selets what language to browse code snippets'''
-		itemList = g.CATEGORIES
-		commandMap = STANDARD_MAP
-
-		headline = "Browse snippets"
-		if len(itemList) == 0:
-			notFoundStr = 'No programming languages found! Visit '
-			notFoundStr += '"Manage languages" \nfrom the main menu.'
-			midWin.flash("\n" + notFoundStr)
-		return simple_menu(headline, itemList, commandMap, 9, argList)
-
-	def browseLangSnippets(argList):
-		''' User has chosen a language, now show snippets for that language'''
-		lang = argList[1]
-		results = GoogleBot.get_lang(lang)
-		
-		# Sort by first item, which is the description.
-		results.sort(key=lambda x:x[0].lower())
-		itemList = [x[0] for x in results]
-		pathList = [x[1] for x in results]
-
-		commandMap = (
-				('j', MenuAction.scrollDown),
-				('k', MenuAction.scrollUp),
-				('l', MenuAction.nextPage),
-				('h', MenuAction.prevPage),
-				('b', MenuAction.back),
-				('d', MenuAction.deleteItem),
-				('r', MenuAction.rename)
-			)
-
-		# Send pathList data to menu for use in MenuAction functions.
-		data = {'pathList': pathList}
-		if len(itemList) == 0:
-			midWin.flash("\nThere are no %s snippets yet." % lang)
-		headline = "%s Programming Snippets" % lang
-		index, selection, pushPop = simple_menu(headline, itemList, commandMap, 9, argList, data)
-
-		# If user exits, don't attempt to get selected item (since it wasn't selected)
-		# If user doesn't exit, get the path corresponding to the selection and open
-		# it in the default text editor.
-		if index != -1 and selection is not False:
-			description = selection
-			text_editor(pathList[index])
-		topWin.clear(); midWin.clear(); botWin.clear();
-		return index, selection, None
-
-	########################################################
-	# Manage languages
-	########################################################
-	def manageLanguages(argList):
-		''' Add, Delete, Rename programming languages/frameworks '''
-
-		itemList = [
-				"Add language"
-				]
-		commandMap = STANDARD_MAP
-
-		headline = "Manage Languages/frameworks"
-		return simple_menu(headline, itemList, commandMap, 3, argList)
-
-	def addNewLanguage(argList):
-		'''User creates programming languages for categorization of 
-		their snippets'''
-		
-		def get_language():
-			botWin.write("\n\n")
-			botWin.write(breadcrumb_nav(argList))
-			topWin.draw(); botWin.draw(); midWin.draw();
-			try:
-				lang = midWin.read().strip()
-				try:
-					f = open(LANG_FILE, 'a')
-					f.write(lang + '\n')
-					f.close()
-
-					# Make the directory for the language if
-					# it doesn't already exist.
-					langDir = lang_dir(lang)
-					if not os.path.isdir(langDir):
-						os.mkdir(langDir)
-
-
-
-				except:
-					raise
-
-				midWin.clear(); topWin.clear();botWin.clear();
-
-			except KeyboardInterrupt:
-				midWin.clear(); topWin.clear();botWin.clear();
-				curses.curs_set(0)  # Hide cursor
-				curses.noecho()
-				lang = False
-			return lang
-
-		topWin.write("New Programming Language")
-		midWin.write("Language name (CTRL-C to escape): ")
-		lang = get_language()
-		while lang:
-			topWin.clear(); midWin.clear(); botWin.clear();
-
-			# Get description of snippet
-			g.CATEGORIES = quick_read(LANG_FILE)
-			topWin.write("'%s' language created.\n" % lang)
-			topWin.write("Create another language")
-			midWin.write("Language name (CTRL-C to escape): ")
-			lang = get_language()
-
-		return -1, 0, None
-
-	# MENU MAP
-	def get_next_menu(menu, index):
-		''' Determines where to go after leaving a menu.
-		menu: A menu function
-		index: The index telling what menu to go to next
-		'''
-		menuName = menu.__name__
-
-		def __mainMenu():
-			nextMenu = False;
-			if index == 0:
-				nextMenu = createNewMenu
-			elif index == 1:
-				nextMenu = findMenu
-			elif index == 2:
-				nextMenu = browseMenu
-			elif index == 3:
-				nextMenu = manageLanguages
-			elif index == 4:
-				exit(0)
-			return nextMenu
-
-		#######################################
-		# Find
-		#######################################
-		def __findMenu():
-			nextMenu = False
-			if index == -1:
-				nextMenu = mainMenu
-			elif index >= 0:
-				nextMenu = enterQuery
-			return nextMenu
-
-		def __enterQuery():
-			nextMenu = False
-			if index == -1:
-				nextMenu = findMenu
-			elif index >= 0:
-				nextMenu = searchResults
-			return nextMenu
-
-		def __searchResults():
-			nextMenu = False
-			if index == -1:
-				nextMenu = enterQuery
-			elif index >= 0:
-				nextMenu = searchResults
-			return nextMenu
-
-		#######################################
-		# Create
-		#######################################
-		def __createNewMenu():
-			nextMenu = False
-			if index == -1:
-				nextMenu = mainMenu
-			elif index >= 0:
-				nextMenu = createSnippet
-			return nextMenu
-
-		def __createSnippet():
-			nextMenu = False
-			if index == 0:
-				nextMenu = createSnippet
-			elif index == 1 or index == -1:
-				nextMenu = createNewMenu
-			return nextMenu
-
-
-		#######################################
-		# Browse
-		#######################################
-		def __browseMenu():
-			nextMenu = False
-			if index == -1:
-				nextMenu = mainMenu
-			elif index >= 0:
-				nextMenu = browseLangSnippets
-			return nextMenu
-
-		def __browseLangSnippets():
-			nextMenu = False
-			if index == -1:
-				nextMenu = browseMenu
-			if index >= 0:
-				nextMenu = browseLangSnippets
-			return nextMenu
-
-		#######################################
-		# Manage Languages
-		#######################################
-		def __manageLanguages():
-			nextMenu = False
-			if index == -1:
-				nextMenu = mainMenu
-			elif index == 0:
-				nextMenu = addNewLanguage
-			return nextMenu
-
-		def __addNewLanguage():
-			nextMenu = False
-			if index == -1:
-				nextMenu = manageLanguages
-			return nextMenu
-
-		# Execute the menu filter function
-		filterFunc = locals()["__%s" % menuName]
-		newMenu = filterFunc()
-
-		return newMenu
-
-	start_menu_cycle(mainMenu, get_next_menu)
+  ########################################################
+  # Custom menu methods for this program
+  ########################################################
+  def deleteItem(winObj):
+    '''Delete selected'''
+    # Don't try to delete an empty list
+    if len(winObj.itemList) > 0:
+      winObj.win.clear()
+      absIndex = MenuAction.abs_index(winObj)
+      item = winObj.data["pathList"][absIndex]
+      del winObj.menuList[winObj.selectedIndex]
+      del winObj.itemList[absIndex]
+      del winObj.data["pathList"][absIndex]
+      GoogleBot.delete(item)
+      winObj.numMenuPages = math.ceil(len(winObj.itemList) * 1.0 / winObj.itemsPerPage)
+      if len(winObj.menuList) == 0:
+        winObj.menuPage -= 1
+        winObj.displaySize = winObj.itemsPerPage
+        winObj.win.clear()
+      if winObj.selectedIndex+1 > len(winObj.itemList):
+        winObj.selectedIndex -= 1
+
+      startIndex = (winObj.menuPage * winObj.displaySize)
+      endIndex = (startIndex + winObj.displaySize)
+      winObj.menuList = winObj.itemList[startIndex:endIndex]
+      winObj.displaySize = min(winObj.itemsPerPage, len(winObj.menuList))
+      if len(winObj.itemList) == 0:
+          winObj.window.flash("There are no snippets to delete!")
+  
+  def rename(winObj):
+    '''Rename selected'''
+    winObj.win.clear()
+    absIndex = MenuAction.abs_index(winObj)
+    itemPath = winObj.data["pathList"][absIndex]
+    itemName = winObj.menuList[winObj.selectedIndex]
+
+    winObj.win.addstr("Rename ")
+    winObj.win.addstr(itemName, curses.color_pair(FORMAT["plain"]))
+    winObj.win.addstr("...\n")
+    winObj.win.addstr("New description(CTRL-C to cancel): ")
+
+    # Don't do anything if KeyboardInterrupt is sent
+    try:
+      newDescription = winObj.window.read()
+
+      # Make sure the description isn't blank
+      if newDescription != '':
+        # Rename the items in the lists as well as the index.
+        winObj.menuList[winObj.selectedIndex] = newDescription
+        winObj.itemList[absIndex] = newDescription
+        GoogleBot.rename(itemPath, newDescription)
+        winObj.window.clear();
+    except KeyboardInterrupt:
+      winObj.window.clear();
+      curses.curs_set(0)  
+      curses.noecho()
+  
+  MenuAction.add_action(rename)
+  MenuAction.add_action(deleteItem)
+
+
+  ########################################################
+  # Configure the curses environment
+  ########################################################
+  curses.curs_set(0)  # Hide cursor
+  
+  # Store format in a dict for convenience and readability. 
+  # Think of it like a c-style enum.
+  FORMAT = {
+    "plain": 1,
+    "highlight": 2
+  }
+  curses.init_pair(1, curses.COLOR_GREEN, curses.COLOR_BLACK)
+  curses.init_pair(2, curses.COLOR_BLACK ,curses.COLOR_GREEN)
+
+  # Create a template for the windows. We'll assume the standard
+  # width of 80 columns and we'll align everything to the left.
+  t = WindowTemplate(width=80, left=0)
+
+  # Create the individual windows
+  topWin = Window(t, top=0, height=2)
+  midWin = Window(t, top=2, height=13)
+  botWin = Window(t, top=16, height=5)
+
+  # Uncomment to see borders around the windows for positioning 
+  # reference.
+  #topWin.test(); midWin.test(); botWin.test();
+
+  # We'll get this from a file later.
+  # Global variables hack. Needed to update language file but only as 
+  # needed. Nested functions can't alter a global variable, and we need
+  # the functions nested in order to use the curses wrapper (necessary to
+  # avoid genuinely screwing up the user's screen
+  class g:
+    CATEGORIES = quick_read(LANG_FILE)
+    
+  #g.CATEGORIES = sorted(g.CATEGORIES, key = str.lower)
+
+  # This is the standard command mapping that will be used on almost
+  # all the menus. Needs to be a tuple of tuples in order to preserve
+  # order during iteration.
+  STANDARD_MAP = (
+      ('j', MenuAction.scrollDown),
+      ('k', MenuAction.scrollUp),
+      ('l', MenuAction.nextPage),
+      ('h', MenuAction.prevPage),
+      ('b', MenuAction.back)
+    )
+
+
+  '''
+  =========================== MENU FUNCTIONS =========================== 
+    We now define a group of functions we'll call menu functions. These menu
+  functions essentially define the type of selections the user will be able
+  to make. Below these menu function definitions is a menu mapping function 
+  called  get_next_menu which dictates which menu the user will be 
+  redirected to after making a selection from the current menu. 
+    It's important to note that not all 'menus' will actually be the 
+  standard menu where you are given a list of items to select from. Some
+  menus may simply display information or may request user input, and would
+  be better defined as 'screens'. In fact, it may actually be worthwhile to
+  rename 'menu' to 'screen' throughout the codebase to avoid this confusion
+  since all menus are screens but not all screens are menus. 
+
+  Each menu function should have a parameter of argList (explained below)
+  and return a 3-tuple of (index, selection, pushPop)
+
+  index: index serves two roles. On the surface, index is just the index
+  of the selected item from an itemList. However, since almost all programs
+  need to establish a 'terminating menu' where the user can only stay in 
+  the current window or go back to previous ones, we use the index as a form
+  of navigation as well. Throughout the program, a returned index of -1 
+  indicates that the user should be redirected back to the previous menu.
+  Consider a simple phonebook application. Eventually the user will need to
+  input data for a new telephone entry. Clearly no selection from a menu is
+  being made at the moment they put in an entry, but to keep consistent 
+  with our get_next_menu mapping, we need to return SOME index. In some
+  instances, -2 is used to indicate a forced exit.
+
+  selection: In the event of a standard menu, selection should return the
+  string value of the selection. In the event of a non-standard menu (such
+  as a screen for user input or information display), the selection value is
+  irrelevant and any arbitrary value will work.
+
+  pushPop: Probably the most complicated of the tuple is the pushPop return 
+  value. pushPop can be one of three values: False, None, and True. 
+  Each menu function will be passed an argument list named argList. 
+  The pushPop value determines how to manipulate the argList list before
+  we go to the next menu.
+
+    If pushPop is:
+    True: Append the current menu's returned selection value to the argList
+    so the next menu will have access to the value.
+
+    False: Pop the last argList value, removing the previous menus' value in
+    the argList (if any was provided)
+
+    None: Pass the argList as is to the next menu function.
+
+  As an example, consider an application that stores the users physical
+  address and contains the following menus:
+    stateMenu,
+    cityMenu,
+    getStreetAddressInput
+    confirmAndSave
+
+  From stateMenu, the user selects the state they live in. This data will
+  be needed by cityMenu to build a list of possible cities, so pushPop for
+  stateMenu should be True so the selected state value is appended to the 
+  argList and is this made available to the cityMenu.
+
+  Since the users city will be stored, we need to add the selected city
+  to the argList so we'll have access to it in the confirmAndSave screen.
+  Thus, the cityMenu pushPop value should be True. This scenario is 
+  exactly the same for getStreetAddressInput and should also return a 
+  pushPop value of True.
+
+  Finally, the confirmAndSave menu allows the user to save the data. Since
+  this is a 'terminating menu' (there are no more menus 'after' this), we 
+  don't need to append the selection of value (something like "Yes, I 
+  confirm this data is correct") to the argList. This the pushPop value of 
+  confirmAndSave is None.
+
+  Whenever possible, use the simple_menu function defined below for 
+  standard menus.
+  '''
+
+  def simple_menu(headline, itemList, commandMap, itemsPerPage, argList, data=None):
+    '''
+    Create a simple menu that has a headline, menu, command
+    display, and breadcrumb navigation. This is specific to this program 
+    to help avoid repitition, and should only be used inside menu functions.
+
+    headline: Headline that will be displayed in the top window.
+    itemList: List of items to be displayed in the middle window
+    commandMap: Command mapping to be displayed in the bottom window
+    itemsPerPage: How many items of the menu will be displayed at once
+    argList: Argument list of the current menu.
+
+    Example usage:
+
+    itemList = [
+        "Item0",
+        "Item1",
+        "Item2",
+        "Item3",
+        ]
+    commandMap = (
+      ('j', MenuAction.scrollDown),
+      ('k', MenuAction.scrollUp),
+      ('q', MenuAction.exit)
+    )
+
+    headline = "Main Menu"
+    index, selection = simple_menu(headline, itemList, commandMap, 4, argList)
+    '''
+
+    # Get the menu object
+    menu = Menu(midWin, itemList, commandMap, FORMAT, data)
+
+    # Write the headline to the top screen
+    topWin.write(headline)
+
+    # Write the command mapping to the bottom screen
+    botWin.write(menu.command_str())
+    botWin.write("\n\n")
+
+    # Write the breadcrumb navigation to the bottom screen
+    botWin.write(breadcrumb_nav(argList))
+
+    # Now display what we've written.
+    topWin.draw(); botWin.draw();
+
+    # Display menu in the middle window and return users selection
+    # and the index of the selection.
+    index, selection = menu.activate(itemsPerPage, (0,1))
+
+    # Clear all the windows before we exit
+    topWin.clear(); midWin.clear(); botWin.clear();
+
+    return index, selection, True
+
+  ########################################################
+  # Main Menu
+  ########################################################
+  def mainMenu(argList):
+    '''Home screen menu'''
+
+    itemList = [
+        "Create a new snippet",
+        "Find a snippet",
+        "Browse snippets",
+        "Manage languages",
+        "Exit"
+        ]
+    commandMap = (
+      ('j', MenuAction.scrollDown),
+      ('k', MenuAction.scrollUp),
+      ('q', MenuAction.exit)
+    )
+
+    headline = "Main Menu"
+    return simple_menu(headline, itemList, commandMap, 5, argList)
+
+  ########################################################
+  # Searching
+  ########################################################
+  def findMenu(argList):
+    '''User selects what language they want to choose for finding snippet'''
+    itemList = g.CATEGORIES
+    commandMap = STANDARD_MAP
+
+    headline = "Find a code snippet: Choose a language/framework"
+    return simple_menu(headline, itemList, commandMap, 9, argList)
+
+
+  def enterQuery(argList):
+    '''User puts in his search term'''
+    lang = argList[1]
+    # Get description of snippet
+    topWin.flash("Find a %s snippet" % lang)
+    midWin.flash("Snippet query (CTRL-C to escape): ")
+    botWin.flash(breadcrumb_nav(argList))
+    try:
+      selection = midWin.read()
+      midWin.clear(); topWin.clear();botWin.clear();
+      index = 1
+    except KeyboardInterrupt:
+      midWin.clear(); topWin.clear();botWin.clear();
+      curses.curs_set(0)  # Hide cursor
+      curses.noecho()
+      index, selection = -1, 0
+
+    return index, selection, True
+
+  def searchResults(argList):
+    '''User gets to view search results'''
+    lang = argList[1]
+    query = argList[2]
+    
+    results = GoogleBot.search(query, lang)
+    itemList = [x[0] for x in results]
+    pathList = [x[1] for x in results]
+
+    commandMap = (
+        ('j', MenuAction.scrollDown),
+        ('k', MenuAction.scrollUp),
+        ('b', MenuAction.back),
+        ('q', MenuAction.exit),
+        ('d', MenuAction.deleteItem),
+        ('r', MenuAction.rename)
+    )
+
+    # Send pathList data to menu for use in MenuAction functions.
+    data = {'pathList': pathList}
+    headline = "Search Results: %s" % query
+    if len(itemList) == 0:
+      midWin.flash("\nThere were no results for '%s'" % query)
+    index, selection, pushPop = simple_menu(headline, itemList, commandMap, 9, argList, data)
+
+    # If user exits, don't attempt to get selected item (since it wasn't selected)
+    # If user doesn't exit, get the path corresponding to the selection and open
+    # it in the default text editor.
+    if index != -1 and selection is not False:
+      text_editor(pathList[index])
+    midWin.clear(); topWin.clear();botWin.clear();
+
+    return index, selection, None
+
+  ########################################################
+  # Creating 
+  ########################################################
+  def createNewMenu(argList):
+    '''User selects what language they want to choose for new snippet'''
+    itemList = g.CATEGORIES
+    commandMap = STANDARD_MAP
+
+    headline = "Create New Snippet: Choose a language/framework"
+    return simple_menu(headline, itemList, commandMap, 9, argList)
+
+  def createSnippet(argList):
+    '''User creats snippets and can create another or return to main menu'''
+    lang = argList[1]
+    
+    def get_description():
+      botWin.write("\n\n")
+      botWin.write(breadcrumb_nav(argList))
+      topWin.draw(); botWin.draw(); midWin.draw();
+      try:
+        description = midWin.read()
+        GoogleBot.add_snippet_to_index(description, lang)
+        midWin.clear(); topWin.clear();botWin.clear();
+
+      except KeyboardInterrupt:
+        midWin.clear(); topWin.clear();botWin.clear();
+        curses.curs_set(0)  # Hide cursor
+        curses.noecho()
+        description = False
+      return description
+
+    topWin.write("New %s snippet" % lang)
+    midWin.write("Snippet description (CTRL-C to escape): ")
+    description = get_description()
+    while description:
+      topWin.clear(); midWin.clear(); botWin.clear();
+
+      # Get description of snippet
+      topWin.write("'%s' snippet created.\n" % description)
+      topWin.write("Create another %s snippet" % lang)
+      midWin.write("Snippet description (CTRL-C to escape): ")
+      description = get_description()
+
+    return -1, 0, None
+
+  ########################################################
+  # Browsing
+  ########################################################
+  def browseMenu(argList):
+    ''' User selets what language to browse code snippets'''
+    itemList = g.CATEGORIES
+    commandMap = STANDARD_MAP
+
+    headline = "Browse snippets"
+    if len(itemList) == 0:
+      notFoundStr = 'No programming languages found! Visit '
+      notFoundStr += '"Manage languages" \nfrom the main menu.'
+      midWin.flash("\n" + notFoundStr)
+    return simple_menu(headline, itemList, commandMap, 9, argList)
+
+  def browseLangSnippets(argList):
+    ''' User has chosen a language, now show snippets for that language'''
+    lang = argList[1]
+    results = GoogleBot.get_lang(lang)
+    
+    # Sort by first item, which is the description.
+    results.sort(key=lambda x:x[0].lower())
+    itemList = [x[0] for x in results]
+    pathList = [x[1] for x in results]
+
+    commandMap = (
+        ('j', MenuAction.scrollDown),
+        ('k', MenuAction.scrollUp),
+        ('l', MenuAction.nextPage),
+        ('h', MenuAction.prevPage),
+        ('b', MenuAction.back),
+        ('d', MenuAction.deleteItem),
+        ('r', MenuAction.rename)
+      )
+
+    # Send pathList data to menu for use in MenuAction functions.
+    data = {'pathList': pathList}
+    if len(itemList) == 0:
+      midWin.flash("\nThere are no %s snippets yet." % lang)
+    headline = "%s Programming Snippets" % lang
+    index, selection, pushPop = simple_menu(headline, itemList, commandMap, 9, argList, data)
+
+    # If user exits, don't attempt to get selected item (since it wasn't selected)
+    # If user doesn't exit, get the path corresponding to the selection and open
+    # it in the default text editor.
+    if index != -1 and selection is not False:
+      description = selection
+      text_editor(pathList[index])
+    topWin.clear(); midWin.clear(); botWin.clear();
+    return index, selection, None
+
+  ########################################################
+  # Manage languages
+  ########################################################
+  def manageLanguages(argList):
+    ''' Add, Delete, Rename programming languages/frameworks '''
+
+    itemList = [
+        "Add language"
+        ]
+    commandMap = STANDARD_MAP
+
+    headline = "Manage Languages/frameworks"
+    return simple_menu(headline, itemList, commandMap, 3, argList)
+
+  def addNewLanguage(argList):
+    '''User creates programming languages for categorization of 
+    their snippets'''
+    
+    def get_language():
+      botWin.write("\n\n")
+      botWin.write(breadcrumb_nav(argList))
+      topWin.draw(); botWin.draw(); midWin.draw();
+      try:
+        lang = midWin.read().strip()
+        try:
+          f = open(LANG_FILE, 'a')
+          f.write(lang + '\n')
+          f.close()
+
+          # Make the directory for the language if
+          # it doesn't already exist.
+          langDir = lang_dir(lang)
+          if not os.path.isdir(langDir):
+            os.mkdir(langDir)
+
+
+
+        except:
+          raise
+
+        midWin.clear(); topWin.clear();botWin.clear();
+
+      except KeyboardInterrupt:
+        midWin.clear(); topWin.clear();botWin.clear();
+        curses.curs_set(0)  # Hide cursor
+        curses.noecho()
+        lang = False
+      return lang
+
+    topWin.write("New Programming Language")
+    midWin.write("Language name (CTRL-C to escape): ")
+    lang = get_language()
+    while lang:
+      topWin.clear(); midWin.clear(); botWin.clear();
+
+      # Get description of snippet
+      g.CATEGORIES = quick_read(LANG_FILE)
+      topWin.write("'%s' language created.\n" % lang)
+      topWin.write("Create another language")
+      midWin.write("Language name (CTRL-C to escape): ")
+      lang = get_language()
+
+    return -1, 0, None
+
+  # MENU MAP
+  def get_next_menu(menu, index):
+    ''' Determines where to go after leaving a menu.
+    menu: A menu function
+    index: The index telling what menu to go to next
+    '''
+    menuName = menu.__name__
+
+    def __mainMenu():
+      nextMenu = False;
+      if index == 0:
+        nextMenu = createNewMenu
+      elif index == 1:
+        nextMenu = findMenu
+      elif index == 2:
+        nextMenu = browseMenu
+      elif index == 3:
+        nextMenu = manageLanguages
+      elif index == 4:
+        exit(0)
+      return nextMenu
+
+    #######################################
+    # Find
+    #######################################
+    def __findMenu():
+      nextMenu = False
+      if index == -1:
+        nextMenu = mainMenu
+      elif index >= 0:
+        nextMenu = enterQuery
+      return nextMenu
+
+    def __enterQuery():
+      nextMenu = False
+      if index == -1:
+        nextMenu = findMenu
+      elif index >= 0:
+        nextMenu = searchResults
+      return nextMenu
+
+    def __searchResults():
+      nextMenu = False
+      if index == -1:
+        nextMenu = enterQuery
+      elif index >= 0:
+        nextMenu = searchResults
+      return nextMenu
+
+    #######################################
+    # Create
+    #######################################
+    def __createNewMenu():
+      nextMenu = False
+      if index == -1:
+        nextMenu = mainMenu
+      elif index >= 0:
+        nextMenu = createSnippet
+      return nextMenu
+
+    def __createSnippet():
+      nextMenu = False
+      if index == 0:
+        nextMenu = createSnippet
+      elif index == 1 or index == -1:
+        nextMenu = createNewMenu
+      return nextMenu
+
+
+    #######################################
+    # Browse
+    #######################################
+    def __browseMenu():
+      nextMenu = False
+      if index == -1:
+        nextMenu = mainMenu
+      elif index >= 0:
+        nextMenu = browseLangSnippets
+      return nextMenu
+
+    def __browseLangSnippets():
+      nextMenu = False
+      if index == -1:
+        nextMenu = browseMenu
+      if index >= 0:
+        nextMenu = browseLangSnippets
+      return nextMenu
+
+    #######################################
+    # Manage Languages
+    #######################################
+    def __manageLanguages():
+      nextMenu = False
+      if index == -1:
+        nextMenu = mainMenu
+      elif index == 0:
+        nextMenu = addNewLanguage
+      return nextMenu
+
+    def __addNewLanguage():
+      nextMenu = False
+      if index == -1:
+        nextMenu = manageLanguages
+      return nextMenu
+
+    # Execute the menu filter function
+    filterFunc = locals()["__%s" % menuName]
+    newMenu = filterFunc()
+
+    return newMenu
+
+  start_menu_cycle(mainMenu, get_next_menu)
 
 # Actual execution begins here. Call run() function as a callback of the 
 # curses wrapper so a lot of environmental things are handled by default.
