@@ -1,2 +1,5 @@
 whoosh
 inflect
+requests
+pyquery
+html2text
