@@ -50,21 +50,13 @@ def run(stdscr):
     winObj.win.addstr("...\n")
     winObj.win.addstr("New description(CTRL-C to cancel): ")
 
-    # Don't do anything if KeyboardInterrupt is sent
-    try:
-      newDescription = winObj.window.read()
-
-      # Make sure the description isn't blank
-      if newDescription != '':
-        # Rename the items in the lists as well as the index.
-        winObj.menuList[winObj.selectedIndex] = newDescription
-        winObj.itemList[absIndex] = newDescription
-        GoogleBot.rename(itemPath, newDescription)
-        winObj.window.clear();
-    except KeyboardInterrupt:
-      winObj.window.clear();
-      curses.curs_set(0)  
-      curses.noecho()
+    newDescription = winObj.window.read()
+    if newDescription and newDescription != '':
+      # Rename the items in the lists as well as the index.
+      winObj.menuList[winObj.selectedIndex] = newDescription
+      winObj.itemList[absIndex] = newDescription
+      GoogleBot.rename(itemPath, newDescription)
+    winObj.window.clear();
   
   MenuAction.add_action(rename)
   MenuAction.add_action(deleteItem)
@@ -292,16 +284,12 @@ def run(stdscr):
     topWin.flash("Find a %s snippet" % lang)
     midWin.flash("Snippet query (CTRL-C to escape): ")
     botWin.flash(breadcrumb_nav(argList))
-    try:
-      selection = midWin.read()
-      midWin.clear(); topWin.clear();botWin.clear();
+    selection = midWin.read()
+    if selection:
       index = 1
-    except KeyboardInterrupt:
-      midWin.clear(); topWin.clear();botWin.clear();
-      curses.curs_set(0)  # Hide cursor
-      curses.noecho()
+    else:
       index, selection = -1, 0
-
+    midWin.clear(); topWin.clear();botWin.clear();
     return index, selection, True
 
   def searchResults(argList):
@@ -357,16 +345,10 @@ def run(stdscr):
       botWin.write("\n\n")
       botWin.write(breadcrumb_nav(argList))
       topWin.draw(); botWin.draw(); midWin.draw();
-      try:
-        description = midWin.read()
+      description = midWin.read()
+      if description:
         GoogleBot.add_snippet_to_index(description, lang)
-        midWin.clear(); topWin.clear();botWin.clear();
-
-      except KeyboardInterrupt:
-        midWin.clear(); topWin.clear();botWin.clear();
-        curses.curs_set(0)  # Hide cursor
-        curses.noecho()
-        description = False
+      midWin.clear(); topWin.clear();botWin.clear();
       return description
 
     topWin.write("New %s snippet" % lang)
@@ -456,8 +438,9 @@ def run(stdscr):
       botWin.write("\n\n")
       botWin.write(breadcrumb_nav(argList))
       topWin.draw(); botWin.draw(); midWin.draw();
-      try:
-        lang = midWin.read().strip()
+      lang = midWin.read()
+      if lang:
+        lang = lang.strip()
         try:
           f = open(LANG_FILE, 'a')
           f.write(lang + '\n')
@@ -468,19 +451,10 @@ def run(stdscr):
           langDir = lang_dir(lang)
           if not os.path.isdir(langDir):
             os.mkdir(langDir)
-
-
-
         except:
           raise
 
-        midWin.clear(); topWin.clear();botWin.clear();
-
-      except KeyboardInterrupt:
-        midWin.clear(); topWin.clear();botWin.clear();
-        curses.curs_set(0)  # Hide cursor
-        curses.noecho()
-        lang = False
+      midWin.clear(); topWin.clear();botWin.clear();
       return lang
 
     topWin.write("New Programming Language")
