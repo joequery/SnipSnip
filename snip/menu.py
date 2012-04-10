@@ -90,39 +90,42 @@ class Menu:
 
     keepLooping = True
     while keepLooping:
-      c = self.win.getch()
-      keys = [x for (x,y) in self.commandMap]
-      # If an integer, then the user has made a selection. Menu label
-      # begins at 1, so subtract 1 from users choice. Force an exit
-      # since the selection was made.
-      if c in range(49, 49 + self.displaySize):
-        self.selectedIndex = (c) - 49 # See ASCII table
+      try:
+        c = self.win.getch()
+        keys = [x for (x,y) in self.commandMap]
+        # If an integer, then the user has made a selection. Menu label
+        # begins at 1, so subtract 1 from users choice. Force an exit
+        # since the selection was made.
+        if c in range(49, 49 + self.displaySize):
+          self.selectedIndex = (c) - 49 # See ASCII table
+          self.display_menu_from_list(self.menuList, self.selectedIndex, coords)
+          break
+        # If not an integer, look through the commandMap and execute the
+        # provided function
+        elif c in range(0, 255) and chr(c) in keys:
+          # Get the corresponding function in the tuple.
+          i = keys.index(chr(c))
+          func = [y for (x,y) in self.commandMap][i]
+
+          # Pass the current window object to the function.
+          func(self)
+       
+        # If not a standard ascii char, see if an arrow button was pressed.
+        elif c in arrowKeys:
+          i = arrowKeys.index(c)
+          func = [y for (x,y) in arrowFunctions][i]
+
+          # Pass the current window object to the function.
+          func(self)
+
         self.display_menu_from_list(self.menuList, self.selectedIndex, coords)
-        break
-      # If not an integer, look through the commandMap and execute the
-      # provided function
-      elif c in range(0, 255) and chr(c) in keys:
-        # Get the corresponding function in the tuple.
-        i = keys.index(chr(c))
-        func = [y for (x,y) in self.commandMap][i]
 
-        # Pass the current window object to the function.
-        func(self)
-     
-      # If not a standard ascii char, see if an arrow button was pressed.
-      elif c in arrowKeys:
-        i = arrowKeys.index(c)
-        func = [y for (x,y) in arrowFunctions][i]
-
-        # Pass the current window object to the function.
-        func(self)
-
-      self.display_menu_from_list(self.menuList, self.selectedIndex, coords)
-
-      # If '\n', then enter was pressed and a selection was made. Also check for
-      # the FORCE_EXIT flag.
-      keepLooping = c != ord('\n') and self.FORCE_EXIT == False
-      # End while
+        # If '\n', then enter was pressed and a selection was made. Also check for
+        # the FORCE_EXIT flag.
+        keepLooping = c != ord('\n') and self.FORCE_EXIT == False
+      except KeyboardInterrupt:
+        pass
+        # End while
 
     self.win.refresh()
 
