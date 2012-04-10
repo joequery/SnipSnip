@@ -74,6 +74,7 @@ class Window:
     self.win.clear()
     self.win.refresh()
 
+  # Read input from the keyboard.
   def read(self):
     '''
     Read a string, execute necessary configurations
@@ -83,9 +84,13 @@ class Window:
     curses.curs_set(1)  
     self.win.clrtoeol()
     curses.echo()
-    text = self.win.getstr()
-    curses.noecho()
+    try:
+      text = self.win.getstr()
+    except KeyboardInterrupt:
+      text = False
+
     curses.curs_set(0)  
+    curses.noecho()
     return text
 
   
